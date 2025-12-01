@@ -1,0 +1,320 @@
+/* --- Tổng thể Container --- */
+.profile-container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.profile-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #d63384; /* Hồng chủ đạo */
+  margin-bottom: 30px;
+  text-align: center;
+  border-bottom: 2px solid #f8d7da;
+  padding-bottom: 15px;
+}
+
+/* --- Loading State --- */
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #888;
+  padding: 50px;
+}
+
+/* --- Phần Header thông tin User (Avatar, Tên, Email) --- */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 25px;
+  margin-bottom: 30px;
+  background-color: #fff0f5; /* Nền hồng nhạt */
+  border-radius: 10px;
+  border: 1px solid #f8d7da;
+}
+
+.avatar-display {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #d63384;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Không co lại */
+  border: 4px solid #f8d7da;
+}
+
+.avatar-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-details-summary h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.6rem;
+  color: #333;
+}
+
+.user-details-summary p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.user-details-summary .points {
+  font-weight: bold;
+  color: #28a745; /* Màu xanh lá cho điểm */
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+/* --- Tabs cho Thông tin và Mật khẩu --- */
+.tabs-profile {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tabs-profile button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background-color: transparent;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  margin: 0 5px;
+}
+
+.tabs-profile button:hover {
+  color: #d63384;
+}
+
+.tabs-profile button.active {
+  background-color: #d63384; /* Nền hồng đậm */
+  color: white;
+  box-shadow: 0 4px 10px rgba(214, 51, 132, 0.2);
+}
+
+/* --- Nội dung Tab (Form) --- */
+.tab-content {
+  background-color: #fcfcfc;
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  margin-bottom: 30px;
+}
+
+.tab-content .form-group {
+  margin-bottom: 20px;
+}
+
+.tab-content label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.tab-content input[type="text"],
+.tab-content input[type="email"],
+.tab-content input[type="tel"],
+.tab-content input[type="date"],
+.tab-content input[type="password"],
+.tab-content select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tab-content input:disabled {
+  background-color: #f0f0f0;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.tab-content input:focus,
+.tab-content select:focus {
+  outline: none;
+  border-color: #d63384;
+  box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.1);
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0; /* Remove default margin-bottom */
+}
+
+/* --- Nút bấm trong Tab Content --- */
+.edit-btn,
+.save-btn,
+.cancel-btn,
+.change-password-btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px; /* Thêm khoảng cách */
+}
+
+.edit-btn {
+  background-color: #d63384;
+  color: white;
+  box-shadow: 0 4px 8px rgba(214, 51, 132, 0.2);
+}
+
+.edit-btn:hover {
+  background-color: #b02a6b;
+  transform: translateY(-2px);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.save-btn, .change-password-btn {
+  background-color: #28a745; /* Xanh lá cây */
+  color: white;
+}
+
+.save-btn:hover, .change-password-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+/* --- Phần Vé đã đặt --- */
+.ticket-section {
+  margin-top: 40px;
+  background-color: #fcfcfc;
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.ticket-section h3 {
+  font-size: 1.8rem;
+  color: #d63384;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.no-ticket {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 20px;
+  border: 1px dashed #f8d7da;
+  border-radius: 8px;
+  background-color: #fff0f5;
+}
+
+.table-container {
+  overflow-x: auto; /* Cuộn ngang nếu bảng quá rộng */
+}
+
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+.ticket-table thead {
+  background-color: #d63384;
+  color: white;
+}
+
+.ticket-table th,
+.ticket-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.ticket-table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.ticket-table tbody tr:hover {
+  background-color: #fff0f5;
+}
+
+/* Trạng thái vé */
+.ticket-table td.status {
+  font-weight: 600;
+}
+
+.ticket-table td.status.pending { color: #ffc107; } /* Màu vàng */
+.ticket-table td.status.paid { color: #28a745; }    /* Màu xanh lá */
+.ticket-table td.status.cancelled { color: #dc3545; } /* Màu đỏ */
+.ticket-table td.status.expired { color: #6c757d; }  /* Màu xám */
+
+.clickable-row:hover {
+    background-color: #f1f8ff;
+    transition: background-color 0.2s ease;
+}
+
+.clickable-row:active {
+    background-color: #e6f2ff;
+}
+
+/* Chỉnh lại style cho table */
+.ticket-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.ticket-table th, .ticket-table td {
+    padding: 12px 15px;
+    text-align: left;
+}

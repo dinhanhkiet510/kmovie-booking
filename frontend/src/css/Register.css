@@ -1,0 +1,92 @@
+/* register.css - chỉ cho trang Register */
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #fce7f3, #fff, #f9a8d4);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.register-container {
+  width: 100%;
+  max-width: 380px;
+  padding: 40px 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(214, 51, 132, 0.2);
+  text-align: center;
+}
+
+.register-title {
+  font-size: 26px;
+  color: #d63384;
+  margin-bottom: 25px;
+  font-weight: bold;
+}
+
+.register-error {
+  color: #c21872;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.register-form .form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.register-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: #a61e4d;
+  font-weight: 500;
+}
+
+.register-form input {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #f1c0d1;
+  outline: none;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.register-form input:focus {
+  border-color: #d63384;
+  box-shadow: 0 0 6px rgba(214, 51, 132, 0.3);
+}
+
+.register-button {
+  width: 100%;
+  padding: 14px;
+  background: #d63384;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.register-button:hover {
+  background: #c21872;
+}
+
+.register-login {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #a61e4d;
+}
+
+.register-login a {
+  color: #d63384;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-login a:hover {
+  text-decoration: underline;
+}

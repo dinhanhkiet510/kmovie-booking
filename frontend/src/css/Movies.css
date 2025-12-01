@@ -1,0 +1,393 @@
+/* --- Variables: Light Pink Theme --- */
+:root {
+  --primary-pink: #ff477e;       /* Màu hồng đậm cho nút/icon */
+  --light-pink: #ffe0e9;         /* Màu nền phụ */
+  --bg-main: #fff5f7;            /* Màu nền chính (Trắng hồng nhạt) */
+  --card-bg: #ffffff;            /* Nền card trắng */
+  --text-dark: #333333;          /* Chữ đen */
+  --text-gray: #666666;          /* Chữ xám */
+  --border-color: #ffd1dc;       /* Viền hồng nhạt */
+  --shadow-soft: 0 10px 25px rgba(255, 71, 126, 0.15);
+  --radius: 16px;
+  --transition: all 0.3s ease;
+}
+
+.movies-page-wrapper {
+  background-color: var(--bg-main);
+  color: var(--text-dark);
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.section-spacer {
+  margin-bottom: 50px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* --- Header Section --- */
+.movies-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.title-block {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--primary-pink);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+}
+
+.title-underline {
+  width: 60px;
+  height: 4px;
+  background: var(--primary-pink);
+  margin: 0 auto 10px auto;
+  border-radius: 2px;
+}
+
+.section-subtitle {
+  color: var(--text-gray);
+  font-size: 1.1rem;
+}
+
+/* --- Filter Bar (FIXED) --- */
+.filter-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50px; /* Bo tròn kiểu viên thuốc */
+  padding: 15px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 5px 20px rgba(255, 182, 193, 0.3); /* Bóng hồng nhẹ */
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+@media (min-width: 768px) {
+  .filter-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary-pink);
+  font-weight: 700;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.icon-pulse {
+  animation: pulse 2s infinite;
+}
+
+.select-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+/* --- Custom Select Styles (Quan trọng để fix lỗi không click được) --- */
+.custom-select-wrapper {
+  position: relative;
+  min-width: 180px;
+  flex: 1;
+}
+
+.select-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-pink);
+  z-index: 2; /* Đảm bảo icon nằm trên */
+  pointer-events: none; /* QUAN TRỌNG: Cho phép click xuyên qua icon vào thẻ select */
+}
+
+.custom-select {
+  width: 100%;
+  padding: 12px 20px 12px 45px; /* Padding trái né icon */
+  appearance: none; /* Ẩn mũi tên mặc định */
+  background-color: #fff0f3; /* Nền hồng siêu nhạt */
+  border: 1px solid transparent;
+  border-radius: 25px;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.custom-select:hover {
+  background-color: white;
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.1);
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: var(--primary-pink);
+  background-color: white;
+}
+
+/* Mũi tên custom bên phải */
+.select-arrow {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  width: 10px;
+  height: 6px;
+  background-color: var(--primary-pink);
+  clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* --- Movies Grid --- */
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+@media (min-width: 768px) {
+  .movies-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .movies-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--text-gray);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-reset {
+  background: var(--primary-pink);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* --- Movie Card (Light Theme) --- */
+.movie-card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* Bóng mờ nhẹ */
+  border: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.movie-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-soft);
+  border-color: var(--light-pink);
+}
+
+.poster-wrapper {
+  position: relative;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+}
+
+.poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.movie-card:hover .poster {
+  transform: scale(1.08);
+}
+
+/* Overlay hồng khi hover */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(255, 71, 126, 0.8), rgba(255, 71, 126, 0.2));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.movie-card:hover .overlay {
+  opacity: 1;
+}
+
+.btn-details {
+  background-color: white;
+  color: var(--primary-pink);
+  border: none;
+  padding: 12px 25px;
+  border-radius: 30px;
+  font-weight: 700;
+  transform: translateY(20px);
+  transition: var(--transition);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.movie-card:hover .btn-details {
+  transform: translateY(0);
+}
+
+.rating-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--primary-pink);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(255, 71, 126, 0.4);
+}
+
+.movie-info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.movie-title {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.movie-card:hover .movie-title {
+  color: var(--primary-pink);
+}
+
+.movie-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-gray);
+  margin-top: 8px;
+}
+
+.genre {
+  background: #f8f9fa;
+  color: #666;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border: 1px solid #eee;
+}
+
+/* --- Pagination (Light Pink) --- */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 50px;
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--primary-pink);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--primary-pink);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 71, 126, 0.3);
+}
+
+.page-numbers {
+    display: flex;
+    gap: 8px;
+}
+
+.page-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-gray);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.page-num.active {
+    background: var(--primary-pink);
+    color: white;
+    box-shadow: 0 4px 10px rgba(255, 71, 126, 0.3);
+}
+
+.page-num:hover:not(.active) {
+    background: #fff0f3;
+    color: var(--primary-pink);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}

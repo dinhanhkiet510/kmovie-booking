@@ -1,0 +1,305 @@
+
+.ticket-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Khung vé chính */
+.ticket-wrapper {
+    display: flex;
+    width: 800px;
+    max-width: 90%;
+    background: transparent;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    animation: zoomIn 0.3s ease-out;
+}
+
+/* --- NÚT ĐÓNG (X) --- */
+.close-ticket-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #ff477e; /* Màu hồng đậm */
+    border: 2px solid #fff;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    z-index: 100; /* Đảm bảo luôn nằm trên cùng */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.close-ticket-btn:hover {
+    background: white;
+    color: #ff477e;
+    transform: scale(1.1);
+}
+
+/* --- PHẦN TRÁI (Màu Hồng) --- */
+.ticket-left {
+    flex: 1.2;
+    background: linear-gradient(135deg, #ff9a9e 0%, #ff6b95 100%);
+    padding: 25px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    border-right: 3px dashed rgba(255, 255, 255, 0.4);
+}
+
+.poster-container {
+    width: 160px;
+    height: 240px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+.poster-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ticket-info-left .movie-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    line-height: 1.2;
+}
+
+.ticket-info-left .cinema-name {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ticket-tags .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin: 0 3px;
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Hình tròn khuyết */
+.circle-cutout {
+    position: absolute;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: #333; /* Màu nền tối của overlay, cần chỉnh trùng màu nền web nếu overlay trong suốt */
+    border-radius: 50%;
+    z-index: 10;
+    /* Tạm ẩn nếu background overlay là trong suốt/blur để tránh lộ màu sai */
+    display: none; 
+}
+.circle-cutout.top { top: -15px; }
+.circle-cutout.bottom { bottom: -15px; }
+
+
+/* --- PHẦN PHẢI (Màu Trắng) --- */
+.ticket-right {
+    flex: 1.8;
+    background: #ffffff;
+    padding: 30px;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    position: relative;
+}
+
+.ticket-header-right {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-text {
+    font-family: 'Courier New', monospace;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #ff6b95;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #ffe0e9;
+    padding-bottom: 5px;
+}
+
+.ticket-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item label {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.detail-item span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Highlight màu hồng cho ghế và giá */
+.detail-item.highlight-pink span {
+    color: #ff477e;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.detail-item.full-width {
+    grid-column: span 2;
+    background: #fff0f5; /* Hồng nhạt nền combo */
+    padding: 10px;
+    border-radius: 8px;
+}
+.detail-item.full-width span {
+    font-size: 0.9rem;
+}
+
+/* Đường kẻ nét đứt */
+.dashed-line {
+    border-top: 2px dashed #eee;
+    margin: 15px 0;
+}
+
+/* QR Code Section */
+.ticket-barcode {
+    text-align: center;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qr-code-img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+    border: 1px solid #eee;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.ticket-id {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: #333;
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+.thank-you {
+    font-size: 0.8rem;
+    color: #ff6b95;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Mobile Response */
+@media (max-width: 768px) {
+    .ticket-wrapper {
+        flex-direction: column;
+        width: 85%;
+        height: 85vh;
+        overflow-y: auto;
+    }
+    .ticket-left {
+        flex: unset;
+        border-right: none;
+        border-bottom: 3px dashed rgba(255,255,255,0.4);
+        padding: 15px;
+    }
+    .poster-container {
+        width: 120px;
+        height: 180px;
+    }
+    .close-ticket-btn {
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.3); /* Đổi màu nút đóng trên mobile */
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Con dấu trạng thái */
+.stamp-overlay {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 1.5rem;
+    font-weight: 900;
+    padding: 10px 20px;
+    border: 4px solid;
+    border-radius: 10px;
+    opacity: 0.8;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+
+.stamp-overlay.used {
+    color: #2e7d32; /* Màu xanh lá đậm */
+    border-color: #2e7d32;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stamp-overlay.expired {
+    color: #c62828; /* Màu đỏ đậm */
+    border-color: #c62828;
+    background-color: rgba(255, 255, 255, 0.8);
+}

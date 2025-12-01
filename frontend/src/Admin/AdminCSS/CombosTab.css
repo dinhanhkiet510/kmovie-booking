@@ -1,0 +1,184 @@
+/* --- Variables --- */
+:root {
+  --primary-pink: #d81b60;
+  --light-pink: #fce4ec;
+  --hover-pink: #f06292;
+  --gradient-pink: linear-gradient(135deg, #ec407a, #d81b60);
+  --text-dark: #333;
+  --text-gray: #666;
+  --white: #ffffff;
+  --shadow: 0 4px 12px rgba(216, 27, 96, 0.15);
+  --radius: 12px;
+}
+
+/* --- Layout Chung --- */
+.tab-content {
+  background: var(--white);
+  padding: 30px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-height: 80vh;
+}
+
+.page-title {
+  color: var(--primary-pink);
+  font-size: 24px;
+  width: 100%;
+  font-weight: 700;
+  border-left: 5px solid var(--primary-pink);
+  padding-left: 15px;
+  margin: 0;
+}
+
+/* --- Button Thêm Mới --- */
+.btn-add {
+  background: var(--gradient-pink);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+  transition: transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+}
+
+/* --- Table --- */
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table th {
+  background-color: var(--light-pink);
+  color: var(--primary-pink);
+  padding: 15px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid #f8bbd0;
+  white-space: nowrap;
+}
+
+.dashboard-table td {
+  padding: 15px;
+  border-bottom: 1px solid #ffebee;
+  vertical-align: middle;
+  color: var(--text-dark);
+}
+
+.dashboard-table tr:hover td {
+  background-color: #fff8fa;
+}
+
+/* --- XỬ LÝ HÌNH ẢNH (QUAN TRỌNG) --- */
+/* Class cho ô chứa ảnh */
+.combo-img-cell {
+  width: 100px;
+  text-align: center;
+}
+
+/* Style cho thẻ IMG để không bị méo */
+.combo-img-cell img {
+  width: 80px;          /* Chiều rộng cố định */
+  height: 60px;         /* Chiều cao cố định */
+  object-fit: cover;    /* Cắt ảnh vừa khung, không bị méo */
+  border-radius: 8px;
+  border: 1px solid #eee;
+  background-color: #fff;
+  display: block;       /* Xóa khoảng trắng thừa */
+}
+
+.price-tag {
+  color: #d81b60;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* --- Action Buttons --- */
+.btn-edit, .btn-delete {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-right: 5px;
+  transition: 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-edit { background-color: #e3f2fd; color: #1976d2; }
+.btn-edit:hover { background-color: #bbdefb; }
+
+.btn-delete { background-color: #ffebee; color: #d32f2f; }
+.btn-delete:hover { background-color: #ffcdd2; }
+
+/* --- Form Styles --- */
+.admin-form {
+  background-color: #fff0f5;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 1px solid #f8d7da;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+.form-group.full-width { grid-column: 1 / -1; }
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.form-group input, 
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-save { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.btn-cancel { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }

@@ -1,0 +1,352 @@
+/* ======= Header cơ bản ======= */
+.header {
+  background: #fff;
+  color: #222;
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(255, 0, 128, 0.1);
+  transition: background 0.3s ease;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+/* ======= Logo ======= */
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  color: #ff4da6;
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  color: #ff1a75;
+  text-shadow: 0 0 10px rgba(255, 0, 128, 0.3);
+  transform: scale(1.05);
+}
+
+/* ======= Navigation Menu ======= */
+.nav-menu {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.nav-menu a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-menu a::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff4d88, #ff80b3);
+  transition: width 0.3s ease;
+}
+
+.nav-menu a:hover {
+  color: #ff3399;
+  transform: translateY(-2px);
+}
+
+.nav-menu a:hover::after {
+  width: 100%;
+}
+
+/* ======= Search box ======= */
+.search-wrapper {
+  position: relative;
+}
+
+.search-btn {
+  background: transparent;
+  border: none;
+  color: #ff4da6;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.3s ease, color 0.3s ease;
+  margin-top: -5px;
+}
+
+.search-btn:hover {
+  color: #ff1a75;
+  transform: scale(1.2);
+}
+
+.search-box {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: #fff;
+  border: 1px solid #000;
+  padding: 8px 10px;
+  border-radius: 6px;
+  box-shadow: 0 0 15px rgba(255, 0, 128, 0.15);
+  animation: fadeIn 0.3s ease;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  color: #333;
+  outline: none;
+  width: 300px;
+  padding: 5px;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+/* ======= Mobile menu toggle ======= */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #ff4da6;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.menu-toggle:hover {
+  color: #ff1a75;
+  transform: scale(1.2);
+}
+
+/* ======= Dropdown (Lịch chiếu) ======= */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  z-index: 2000; /* ✅ tăng cao để không bị menu đè */
+}
+
+.dropdown::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 85px;
+  top: 18px;
+}
+
+.dropbtn {
+  cursor: pointer;
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.dropbtn:hover {
+  color: #ff3399;
+  transform: translateY(-2px);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 150%;
+  left: 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 15px rgba(255, 0, 128, 0.15);
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 3000; /* đảm bảo dropdown nổi lên trên nav-menu */
+  animation: fadeIn 0.3s ease;
+}
+
+.dropdown-content a {
+  color: #333;
+  padding: 10px 15px;
+  display: block;
+  text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.dropdown-content a:hover {
+  background: linear-gradient(90deg, #ff4d88, #ff80b3);
+  color: #fff;
+}
+
+/* Chỉ hiển thị khi hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* ======= Responsive ======= */
+@media (max-width: 800px) {
+  /* Navigation menu - mobile left side */
+  .nav-menu {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    gap: 25px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+    transform: translateX(-100%);
+    opacity: 0;
+    box-shadow: 2px 0 15px rgba(255, 0, 128, 0.1);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1500; /* ✅ thấp hơn dropdown */
+    border-right: 1px solid #ff80b3;
+  }
+
+  .nav-menu.open {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Các link căn trái */
+  .nav-menu a {
+    width: 100%;
+    text-align: left;
+  }
+
+  /* Show menu toggle */
+  .menu-toggle {
+    display: block;
+  }
+
+  /* Right controls layout */
+  .right-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1001;
+  }
+
+  .search-wrapper {
+    order: 1;
+  }
+
+  .menu-toggle {
+    order: 2;
+  }
+
+  .search-btn {
+    margin-top: 0px;
+  }
+
+  .search-box {
+    top: 35px;
+    right: 0;
+    width: 250px;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  /* Dropdown fix cho mobile */
+  .dropdown-content {
+    position: relative;
+    top: 5px;
+    left: 0;
+    box-shadow: none;
+    border-radius: 0;
+    min-width: 100%;
+    z-index: 3000;
+    display: none; /* Ẩn mặc định */
+  }
+
+  /* Khi người dùng click vào dropbtn (qua JS sẽ toggle class "open") */
+  .dropdown.open .dropdown-content {
+    display: block; /* Chỉ hiện khi click */
+  }
+
+}
+
+/* ======= Search results dropdown ======= */
+.search-results {
+  list-style: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 100%;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 15px rgba(255, 0, 128, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 5px;
+  padding: 0;
+  z-index: 1001;
+}
+
+.search-results li:hover {
+  cursor: pointer;
+  background-color: #fadfea;
+}
+
+.search-results .search-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.search-results .search-item img {
+  width: 40px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  transition: transform 0.3s ease;
+}
+
+.search-results .search-item a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  transition: color 0.3s ease;
+}
+
+.search-results .search-item:hover {
+  background: linear-gradient(90deg, #ee8cac, #ff80b3);
+}
+
+.search-results .search-item:hover a {
+  color: #fff;
+}
+
+.search-results .search-item:hover img {
+  transform: scale(1.05);
+}
+
+/* ======= Animation ======= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

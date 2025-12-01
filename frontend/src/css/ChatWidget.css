@@ -1,0 +1,85 @@
+.chat-widget-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.chat-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #d63384;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(214, 51, 132, 0.4);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.chat-btn:hover { transform: scale(1.1); }
+
+.chat-box {
+  width: 350px;
+  height: 450px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+}
+
+.chat-header {
+  background: #d63384;
+  color: white;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.close-btn { background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+
+.chat-body {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message-row { display: flex; align-items: flex-end; margin-bottom: 5px; }
+.message-right { justify-content: flex-end; }
+.message-left { justify-content: flex-start; }
+
+.message-bubble {
+  max-width: 80%;
+  padding: 10px 15px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+}
+.bubble-user { background: #d63384; color: white; border-bottom-right-radius: 2px; }
+.bubble-admin { background: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
+
+.avatar-admin {
+  width: 28px; height: 28px; background: #333; color: white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; margin-right: 8px;
+}
+
+.chat-footer {
+  padding: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  background: white;
+}
+.chat-footer input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+.chat-footer button { background: #d63384; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

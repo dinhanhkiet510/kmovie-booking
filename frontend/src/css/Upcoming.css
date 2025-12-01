@@ -1,0 +1,67 @@
+/* Container chính */
+.upcoming-page {
+    background-color: #fff;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Phần tiêu đề section */
+.section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.section-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ff477e; /* Màu hồng chủ đạo */
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    position: relative;
+}
+
+/* Gạch chân trang trí */
+.section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: #ff477e;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Wrapper cho danh sách phim */
+.movies-wrapper {
+    background-color: #fff;
+    border-radius: 16px;
+    padding-bottom: 40px;
+}
+
+/* --- PHẦN REVIEW (THÊM MỚI) --- */
+.review-section {
+    background-color: #f8f9fa; /* Xám rất nhạt */
+    border-top: 1px solid #e9ecef;
+    padding-bottom: 80px;
+    margin-top: 40px;
+}
+
+/* Animation nhẹ cho trang */
+.upcoming-page {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

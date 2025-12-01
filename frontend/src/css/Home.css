@@ -1,0 +1,379 @@
+.btn-buy-tickets {
+  transition: transform 0.3s ease; /* hiệu ứng mượt */
+}
+
+.btn-buy-tickets:hover {
+  transform: scale(1.05); /* phóng to nhẹ 5% */
+}
+/* ===== Banner ===== */
+.banner-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0.6);
+  animation: zoomIn 18s ease-in-out infinite alternate;
+}
+
+.banner-overlay {
+  background: linear-gradient(to right, rgba(233,30,99,0.6), rgba(255,64,129,0.6));
+  z-index: 1;
+}
+
+.banner-content {
+  z-index: 2;
+}
+.banner-title {
+  animation: fadeInDown 1s ease-out;
+}
+
+.banner-subtitle {
+  animation: fadeInUp 1s ease-out 0.5s forwards;
+  opacity: 0;
+}
+
+.banner-btn {
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 0.6rem 1.5rem;
+  margin-top: 15px;
+  font-weight: 600;
+  transition: all 0.3s;
+  animation: zoomIn 1s ease-out 1s forwards;
+  opacity: 0;
+}
+
+.banner-btn:hover {
+  background-color: #ff4081;
+  transform: translateY(-3px);
+}
+
+/* ===== Card phim ===== */
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== Ảnh phim dọc ===== */
+.card-img-top {
+  height: 350px !important;
+  object-fit: cover;
+}
+
+/* ===== Nút điều hướng mới ===== */
+.nav-btn {
+  padding-bottom: 14px;
+  font-size: 30px;
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: #e91e63;
+  font-size: 30px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-btn:hover {
+  background-color: #e91e63;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* ===== Text và màu ===== */
+.text-pink {
+  color: #e91e63;
+}
+
+.bg-pink {
+  background-color: #e91e63 !important;
+}
+
+/* ===== Animations ===== */
+@keyframes zoomIn {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+@keyframes fadeInDown {
+  0% { opacity: 0; transform: translateY(-30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Scrollbar Customization ===== */
+.date * :hover {
+  cursor: pointer;
+}
+.tick-list {
+  list-style: none; /* bỏ bullet mặc định */
+  padding-left: 0;
+}
+
+.tick-list li {
+  position: relative;
+  padding-left: 25px; /* khoảng cách cho tick */
+  margin-bottom: 0.5rem;
+}
+
+.tick-list li::before {
+  content: "✔"; /* dấu tick */
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #ff007f;
+  font-weight: bold;
+}
+
+/* =========================================
+   1. CẤU HÌNH CHUNG & BANNER (GIỮ NGUYÊN)
+   ========================================= */
+.home-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.text-pink { color: #e91e63 !important; }
+.bg-pink { background-color: #e91e63 !important; }
+.border-pink { border-color: #e91e63 !important; }
+
+/* Banner Animation */
+.banner-section { position: relative; overflow: hidden; }
+.banner-img {
+  object-fit: cover; width: 100%; height: 100%;
+  filter: brightness(0.6);
+  animation: zoomIn 18s ease-in-out infinite alternate;
+}
+.banner-overlay { background: linear-gradient(to right, rgba(233,30,99,0.6), rgba(255,64,129,0.6)); z-index: 1; }
+.banner-content { z-index: 2; }
+.banner-title { animation: fadeInDown 1s ease-out; }
+.banner-subtitle { animation: fadeInUp 1s ease-out 0.5s forwards; opacity: 0; }
+.banner-btn {
+  background-color: #e91e63; color: white; border: none; border-radius: 30px;
+  padding: 0.6rem 1.5rem; margin-top: 15px; font-weight: 600;
+  transition: all 0.3s; animation: zoomIn 1s ease-out 1s forwards; opacity: 0;
+}
+.banner-btn:hover { background-color: #ff4081; transform: translateY(-3px); }
+
+/* Animations Keyframes */
+@keyframes zoomIn { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+@keyframes fadeInDown { 0% { opacity: 0; transform: translateY(-30px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* =========================================
+   2. SECTION LỊCH CHIẾU (NEW DESIGN)
+   ========================================= */
+
+/* Khung chứa chính - Hiệu ứng đổ bóng nổi 3D */
+#showtimes {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(233, 30, 99, 0.1);
+  border: 1px solid rgba(233, 30, 99, 0.1);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+
+/* --- CỘT CHỌN RẠP (Bên trái) --- */
+/* Thanh cuộn đẹp */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #ffc1e3; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #e91e63; }
+
+/* Item Brand (Logo rạp) */
+.brand-item {
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+.brand-item:hover {
+  background-color: #fff0f5 !important; /* Hồng nhạt */
+  transform: translateX(5px);
+}
+
+/* Item Theater (Tên rạp cụ thể) */
+.theater-item {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+.theater-item:hover {
+  background-color: #f8f9fa;
+  padding-left: 15px !important; /* Hiệu ứng đẩy sang phải */
+}
+.theater-item.active {
+  background-color: #fff0f5 !important;
+  border-left: 3px solid #e91e63;
+  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
+}
+
+/* --- CỘT LỊCH CHIẾU (Bên phải) --- */
+
+/* Nút chọn Ngày - Hiệu ứng thẻ bài */
+.date-item {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  position: relative;
+  overflow: hidden;
+}
+.date-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(233, 30, 99, 0.2);
+  border-color: #ff80ab;
+}
+.date-item.active {
+  background: linear-gradient(135deg, #e91e63 0%, #ff4081 100%);
+  color: white !important;
+  border: none;
+  box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+  transform: scale(1.05);
+}
+/* Hiệu ứng gợn sóng nhẹ cho ngày active */
+.date-item.active::after {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: rgba(255,255,255,0.2); transform: rotate(30deg);
+}
+
+/* Card Phim (Từng dòng phim) */
+.movie-row {
+  background: white;
+  border-radius: 15px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.movie-row:hover {
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+  border-color: #ffc1e3;
+}
+
+/* Ảnh Poster trong lịch */
+.movie-thumb {
+  transition: transform 0.4s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.movie-row:hover .movie-thumb {
+  transform: scale(1.05) rotate(1deg); /* Nghiêng nhẹ khi hover vào dòng */
+}
+
+/* Badge Format (2D/3D) */
+.format-badge {
+  background: #212529;
+  color: white;
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* Nút Giờ Chiếu (Time Button) */
+.time-btn {
+  background-color: white;
+  color: #e91e63;
+  border: 1px solid #e91e63;
+  font-weight: 600;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.time-btn::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 0%; height: 100%;
+  background: #e91e63;
+  transition: all 0.3s ease;
+  z-index: -1;
+  border-radius: 6px;
+}
+
+.time-btn:hover {
+  color: white;
+  transform: translateY(-3px); /* Nảy lên */
+  box-shadow: 0 5px 10px rgba(233, 30, 99, 0.3); /* Đổ bóng hồng */
+  border-color: transparent;
+}
+
+.time-btn:hover::before {
+  width: 100%; /* Hiệu ứng tràn màu */
+}
+
+/* Text xử lý */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- STYLE CHO NỘI DUNG BLOG (Giống trang báo) --- */
+
+.blog-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+/* Tự động căn chỉnh tất cả hình ảnh trong bài viết */
+.blog-content img {
+    max-width: 100%;       /* Ảnh không bao giờ tràn ra ngoài khung */
+    height: auto !important; /* Giữ tỷ lệ ảnh, không bị méo */
+    display: block;        /* Đưa ảnh xuống dòng riêng */
+    margin: 20px auto;     /* Căn giữa ảnh và tạo khoảng cách trên dưới */
+    border-radius: 8px;    /* Bo góc nhẹ cho đẹp */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Đổ bóng nhẹ */
+}
+
+/* Style cho các thẻ khác trong bài viết */
+.blog-content h2, 
+.blog-content h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #d63384; /* Màu hồng chủ đạo */
+    font-weight: 700;
+}
+
+.blog-content p {
+    margin-bottom: 15px;
+    text-align: justify; /* Căn đều 2 bên văn bản */
+}
+
+.blog-content ul, 
+.blog-content ol {
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+
+.blog-content blockquote {
+    border-left: 4px solid #d63384;
+    padding-left: 15px;
+    font-style: italic;
+    color: #666;
+    background: #fff0f5;
+    padding: 10px 15px;
+    border-radius: 0 8px 8px 0;
+}

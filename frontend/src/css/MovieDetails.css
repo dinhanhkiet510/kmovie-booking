@@ -1,0 +1,47 @@
+.text-pink {
+  color: #e91e63;
+}
+
+.btn-pink {
+  background-color: #e91e63;
+  color: #fff;
+  border: none;
+}
+
+.btn-pink:hover {
+  background-color: #d81b60;
+  color: #fff;
+}
+
+.btn-review{
+    min-width: 120px;
+    font-size: 0.9rem;
+    background-color: #fff;
+    color: black;
+}
+
+.btn-review:hover{
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.hover-bg-dark:hover {
+  background-color: #f0f0f0;
+}
+
+.movie-schedule-vertical button:hover {
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+.col-lg-4 h5 {
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.col-lg-4 .bg-light {
+  transition: all 0.2s ease;
+}
+
+.col-lg-4 .bg-light:hover {
+  background-color: #f8f9fa;
+}

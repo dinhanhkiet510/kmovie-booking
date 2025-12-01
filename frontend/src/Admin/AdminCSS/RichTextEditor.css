@@ -1,0 +1,23 @@
+.rich-editor-wrapper {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Tùy chỉnh chiều cao vùng soạn thảo */
+.quill .ql-container {
+    min-height: 300px; /* Chiều cao tối thiểu */
+    font-size: 16px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.quill .ql-editor {
+    min-height: 300px;
+}
+
+/* Tùy chỉnh thanh toolbar */
+.quill .ql-toolbar {
+    background-color: #f8f9fa;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}

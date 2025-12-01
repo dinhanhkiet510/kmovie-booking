@@ -1,0 +1,39 @@
+footer a {
+  color: #ddd;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+footer a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff007f, #ff4d4d);
+  transition: width 0.3s ease;
+}
+
+footer a:hover {
+  color: #ff99cc !important; /* màu chữ sáng lên khi hover */
+  transform: translateX(4px); /* di chuyển nhẹ sang phải */
+}
+
+footer a:hover::after {
+  width: 100%; /* gạch dưới phát sáng khi hover */
+}
+
+footer hr {
+  opacity: 0.2;
+}
+
+/* Nếu bạn muốn icon cũng có hiệu ứng nhẹ */
+footer svg {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+footer a:hover svg {
+  transform: scale(1.2);
+  color: #ff99cc;
+}
