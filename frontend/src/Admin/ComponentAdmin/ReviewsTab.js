@@ -9,7 +9,7 @@ export default function ReviewsTab({ api }) {
   const [error, setError] = useState("");
   
   // Filter state
-  const [selectedMovie, setSelectedMovie] = useState(""); // Mặc định "" là tất cả
+  const [selectedMovie, setSelectedMovie] = useState(""); 
   const [currentPage, setCurrentPage] = useState(1);
 
   const ITEMS_PER_PAGE = 10;

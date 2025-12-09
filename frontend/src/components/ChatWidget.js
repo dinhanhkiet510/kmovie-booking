@@ -12,24 +12,49 @@ export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  // --- THÊM STATE ĐẾM TIN NHẮN CHƯA ĐỌC ---
+  const [unreadCount, setUnreadCount] = useState(0); 
+  
   const messagesEndRef = useRef(null);
+  
+  // Dùng useRef để lưu trạng thái isOpen mới nhất bên trong socket callback
+  const isOpenRef = useRef(isOpen); 
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Cập nhật ref mỗi khi isOpen thay đổi
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
   useEffect(() => {
     if (user) {
       socket.emit("join_room", user.id);
 
+      // 1. Lấy lịch sử chat và tính số tin chưa đọc ban đầu
       axios.get(`http://localhost:5000/api/chat/${user.id}`).then(res => {
           setMessages(res.data);
+          
+          // Đếm số tin nhắn từ Admin mà chưa đọc (is_read === 0)
+          const unread = res.data.filter(msg => msg.sender !== 'user' && msg.is_read === 0).length;
+          setUnreadCount(unread);
+          
           scrollToBottom();
       });
 
+      // 2. Lắng nghe tin nhắn mới
       socket.on("receive_message", (data) => {
         setMessages((prev) => [...prev, data]);
         scrollToBottom();
+
+        // LOGIC QUAN TRỌNG:
+        // Nếu tin nhắn từ Admin VÀ Chat đang đóng -> Tăng biến đếm
+        if (data.sender !== 'user' && !isOpenRef.current) {
+            setUnreadCount(prev => prev + 1);
+            // Có thể thêm âm thanh thông báo ở đây nếu thích: new Audio('/sound.mp3').play();
+        }
       });
     }
     
@@ -38,9 +63,25 @@ export default function ChatWidget() {
     };
   }, [user]);
 
+  // Scroll khi có tin nhắn mới hoặc mở chat
   useEffect(() => {
-      scrollToBottom();
+      if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
+
+  // --- HÀM MỞ CHAT ---
+  const handleOpenChat = async () => {
+      setIsOpen(true);
+      
+      // Nếu có tin nhắn chưa đọc -> Reset về 0 và gọi API đánh dấu đã đọc
+      if (unreadCount > 0) {
+          setUnreadCount(0);
+          try {
+              await axios.put(`http://localhost:5000/api/chat/read/${user.id}`);
+          } catch (error) {
+              console.error("Lỗi đánh dấu đã đọc:", error);
+          }
+      }
+  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
@@ -52,6 +93,9 @@ export default function ChatWidget() {
       created_at: new Date().toISOString()
     };
 
+    // Optimistic UI: Hiển thị ngay lập tức để chat mượt hơn
+    setMessages((prev) => [...prev, msgData]); 
+
     await socket.emit("send_message", msgData);
     setNewMessage("");
   };
@@ -61,8 +105,15 @@ export default function ChatWidget() {
   return (
     <div className="chat-widget-container">
       {!isOpen && (
-        <button className="chat-btn" onClick={() => setIsOpen(true)}>
+        <button className="chat-btn" onClick={handleOpenChat}>
           <FaCommentDots size={28} />
+          
+          {/* --- HIỂN THỊ CHẤM ĐỎ NẾU CÓ TIN NHẮN MỚI --- */}
+          {unreadCount > 0 && (
+              <span className="unread-badge">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+          )}
         </button>
       )}
 
@@ -81,17 +132,15 @@ export default function ChatWidget() {
             
             {messages.map((msg, index) => (
               <div key={index} className={`message-row ${msg.sender === "user" ? "message-right" : "message-left"}`}>
-                 
+                  
                  {msg.sender !== 'user' && (
                      <div 
                         className="avatar-admin"
                         style={{
-                            // Admin màu đỏ, Staff màu xanh dương
                             backgroundColor: msg.admin_role === 'admin' ? '#dc3545' : '#0d6efd'
                         }}
                         title={msg.admin_name || "Nhân viên hỗ trợ"}
                      >
-                        {/* Nếu là Admin hiện "AD", Staff hiện "NV" */}
                         {msg.admin_role === 'admin' ? 'AD' : 'NV'}
                      </div>
                  )}

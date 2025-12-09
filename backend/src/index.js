@@ -148,12 +148,25 @@ const handleGetAll = (tableName) => async (req, res) => {
 
 const handleCreate = (tableName, extraInsert = null) => async (req, res) => {
   try {
-    const data = req.body;
+    let data = { ...req.body };
+
+    
+    delete data.created_at;
+
     const keys = Object.keys(data).filter(k => !(extraInsert && extraInsert.excludeKeys?.includes(k)));
     
     if (keys.length === 0) return res.status(400).json({ message: "Dữ liệu rỗng" });
 
-    const values = keys.map(k => data[k]);
+    const values = keys.map(k => {
+        let val = data[k];
+        // Kiểm tra nếu là chuỗi và có dạng "2025-12-06T..."
+        if (typeof val === 'string' && val.includes('T') && val.match(/^\d{4}-\d{2}-\d{2}T/)) {
+            // Cắt bỏ phần mili giây và thay T bằng khoảng trắng
+            return val.slice(0, 19).replace('T', ' ');
+        }
+        return val;
+    });
+
     const placeholders = keys.map(() => "?").join(", ");
 
     const [result] = await pool.query(
@@ -174,13 +187,24 @@ const handleUpdate = (tableName, extraUpdate = null) => async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+
+    // Lọc các key hợp lệ
     const keys = Object.keys(data).filter(
       k => !(extraUpdate && extraUpdate.excludeKeys?.includes(k)) && data[k] !== undefined
     );
 
     if (keys.length === 0) return res.status(400).json({ message: "Không có dữ liệu cập nhật" });
 
-    const values = keys.map(k => data[k]);
+    const values = keys.map(k => {
+        let val = data[k];
+        // Kiểm tra nếu là chuỗi ngày tháng dạng ISO (có chữ T)
+        if (typeof val === 'string' && val.includes('T') && val.match(/^\d{4}-\d{2}-\d{2}T/)) {
+            // Cắt lấy YYYY-MM-DD HH:mm:ss
+            return val.slice(0, 19).replace('T', ' '); 
+        }
+        return val;
+    });
+
     const setString = keys.map(k => `${k}=?`).join(", ");
 
     await pool.query(`UPDATE ${tableName} SET ${setString} WHERE id=?`, [...values, id]);
@@ -226,7 +250,7 @@ app.post("/api/auth/login", async (req, res) => {
       const type = roleNames.includes("admin") ? "admin" : "staff";
 
       const accessToken = jwt.sign({ id: admin.id, roles: roleNames, type }, process.env.JWT_SECRET, { expiresIn: "1h" });
-      const refreshToken = jwt.sign({ id: admin.id, roles: roleNames, type }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      const refreshToken = jwt.sign({ id: admin.id, roles: roleNames, type }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
       await pool.query("UPDATE admins SET refresh_token=? WHERE id=?", [refreshToken, admin.id]);
       return res.json({ accessToken, refreshToken, user: { id: admin.id, name: admin.name, email: admin.email, roles: roleNames, type } });
@@ -243,7 +267,7 @@ app.post("/api/auth/login", async (req, res) => {
     const roleNames = roles.map(r => r.name);
 
     const accessToken = jwt.sign({ id: user.id, roles: roleNames, type: "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    const refreshToken = jwt.sign({ id: user.id, type: "user" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const refreshToken = jwt.sign({ id: user.id, type: "user" }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
     await pool.query("UPDATE users SET refresh_token=? WHERE id=?", [refreshToken, user.id]);
     res.json({ accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, roles: roleNames } });
@@ -493,12 +517,13 @@ app.post(["/api/auth/refresh-token", "/api/admin/refresh-token"], async (req, re
     if (!refreshToken) return res.status(401).json({ message: "Refresh Token is required" });
 
     try {
+        // 1. Giải mã Refresh Token
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
         
-        // Determine table based on type in token
-        // Nếu token ghi type='admin' -> bảng admins. Nếu 'user' -> bảng users
+        // 2. Xác định bảng cần query
         const table = decoded.type === 'admin' ? 'admins' : 'users';
         
+        // 3. Kiểm tra user trong DB
         const [rows] = await pool.query(`SELECT * FROM ${table} WHERE id = ? AND refresh_token = ?`, [decoded.id, refreshToken]);
         
         if (rows.length === 0) {
@@ -506,18 +531,45 @@ app.post(["/api/auth/refresh-token", "/api/admin/refresh-token"], async (req, re
         }
 
         const user = rows[0];
-        let role = 'customer';
+        let roleNames = [];
+
+        // LẤY LẠI QUYỀN (ROLES) DẠNG MẢNG ---
         if (decoded.type === 'admin') {
-             role = user.role || 'admin';
+            const [roleRows] = await pool.query(`
+                SELECT r.name 
+                FROM roles r 
+                JOIN admin_roles ar ON ar.role_id = r.id 
+                WHERE ar.admin_id = ?
+            `, [user.id]);
+            roleNames = roleRows.map(r => r.name); // : ['admin', 'staff']
+        } else {
+            const [roleRows] = await pool.query(`
+                SELECT r.name 
+                FROM roles r 
+                JOIN user_roles ur ON ur.role_id = r.id 
+                WHERE ur.user_id = ?
+            `, [user.id]);
+            roleNames = roleRows.map(r => r.name);
         }
 
-        // Ký Access Token mới (Giữ nguyên type từ token cũ)
+        // Fallback: Nếu là admin mà lỡ chưa gán quyền trong DB thì gán tạm để không lỗi
+        if (decoded.type === 'admin' && roleNames.length === 0) {
+             roleNames = ['admin'];
+        }
+
+        // 4. Ký Access Token MỚI
         const newAccessToken = jwt.sign(
-            { id: user.id, type: decoded.type, role: role }, 
-            process.env.JWT_SECRET || 'access_secret',
+            { 
+                id: user.id, 
+                roles: roleNames, // <--- Middleware authorizeRoles cần cái này là Array
+                type: decoded.type // <--- Middleware authenticateJWT cần cái này là 'admin'/'staff'
+            }, 
+            process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
+        console.log(`Refresh Success: ${user.email} | Type: ${decoded.type} | Roles: ${roleNames}`);
+        
         res.json({ accessToken: newAccessToken });
 
     } catch (err) {
@@ -640,9 +692,49 @@ app.post("/api/auth/reset-password", async (req, res) => {
     }
 });
 
+// --- API LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI (DÙNG CHO F5) ---
+app.get("/api/auth/me", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: "Vui lòng đăng nhập" });
+
+    const token = authHeader.split(" ")[1];
+    try {
+        // 1. Verify Token chung
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        let user = null;
+        
+        // 2. Kiểm tra type để query đúng bảng
+        if (decoded.type === 'user') {
+             // Query bảng users
+             const [users] = await pool.query("SELECT id, name, email, avatar, phone, birth_date, gender FROM users WHERE id=?", [decoded.id]);
+             if (users.length) user = users[0];
+        } else {
+             // Query bảng admins (cho admin & staff)
+             const [admins] = await pool.query("SELECT id, name, email FROM admins WHERE id=?", [decoded.id]);
+             if (admins.length) user = admins[0];
+        }
+
+        if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+        // 3. Trả về format chuẩn để Frontend lưu vào Redux/Context
+        res.json({
+            user: { 
+                ...user, 
+                type: decoded.type, // Quan trọng: Frontend cần cái này để phân quyền
+                roles: decoded.roles || [] // Quan trọng: Nếu là admin cần roles
+            } 
+        });
+
+    } catch (err) {
+        console.error("Lỗi Auth Me:", err.message);
+        return res.status(403).json({ message: "Token không hợp lệ hoặc hết hạn" });
+    }
+});
+
 
 // ============================================================
-// 5. ADMIN ROUTES - QUẢN LÝ RẠP=
+// 5. ADMIN ROUTES - QUẢN LÝ RẠP
 // ============================================================
 // Lấy danh sách rạp
 app.get("/api/admin/theaters", authenticateJWT("admin"), authorizeRoles("admin", "staff"), handleGetAll("theaters"));
@@ -1595,11 +1687,35 @@ app.get("/api/user/bookings", authenticateUserJWT, async (req, res) => {
 
 // API sửa thông tin cá nhân
 app.put("/api/user/profile", authenticateUserJWT, async (req, res) => {
-    const { name, email, phone } = req.body;
-    await pool.query("UPDATE users SET name=?, email=?, phone=? WHERE id=?", [name, email, phone, req.user.id]);
-    res.json({message: "Cập nhật thành công"});
-});
+    try {
+        const userId = req.user.id; 
+        const { name, phone, birth_date, gender, avatar } = req.body;
 
+        const formattedBirthDate = birth_date ? birth_date : null;
+
+        const sql = `
+            UPDATE users 
+            SET name = ?, phone = ?, birth_date = ?, gender = ?, avatar = ? 
+            WHERE id = ?
+        `;
+
+        await pool.query(sql, [
+            name, 
+            phone, 
+            formattedBirthDate, 
+            gender, 
+            avatar, 
+            userId
+        ]);
+
+        res.json({ message: "Cập nhật thông tin thành công" });
+
+    } catch (err) {
+        console.error("Lỗi update profile:", err);
+        // Trả về lỗi 500 để Frontend hiển thị thông báo
+        res.status(500).json({ message: "Lỗi server khi cập nhật thông tin" });
+    }
+});
 // API Đổi mật khẩu
 app.put("/api/user/change-password", authenticateUserJWT, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
@@ -2254,6 +2370,21 @@ app.get("/api/admin/chat/users", authenticateJWT("admin","staff"), async (req, r
         const [users] = await pool.query(sql);
         res.json(users);
     } catch (err) { res.status(500).json({ message: "Lỗi server" }); }
+});
+// API: Đánh dấu tất cả tin nhắn của User này là Đã Đọc
+app.put("/api/chat/read/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        // Chỉ update những tin nhắn do admin/staff gửi (sender != 'user') và chưa đọc
+        await pool.query(
+            "UPDATE chat_history SET is_read = 1 WHERE user_id = ? AND sender != 'user' AND is_read = 0",
+            [userId]
+        );
+        res.json({ message: "Đã đánh dấu đã đọc" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
 
