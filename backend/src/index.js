@@ -40,6 +40,52 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+export const sendTicketEmail = async (userEmail, ticketData) => {
+  try {
+    // 2. Nội dung Email (HTML)
+    const mailOptions = {
+      from: '"MovieBooking Cinema" <no-reply@moviebooking.com>',
+      to: userEmail,
+      subject: `[MovieBooking] Vé điện tử: ${ticketData.movieName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #d63384; padding: 20px; text-align: center; color: white;">
+            <h2 style="margin: 0;">VÉ ĐIỆN TỬ</h2>
+          </div>
+          
+          <div style="padding: 20px;">
+            <p>Xin chào <strong>${ticketData.userName}</strong>,</p>
+            <p>Thanh toán thành công! Dưới đây là thông tin vé của bạn:</p>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <h3 style="color: #d63384; margin-top: 0;">${ticketData.movieName}</h3>
+              <img src="${ticketData.movieImage}" alt="${ticketData.movieName}" style="width: 100%; max-width: 300px; border-radius: 5px; margin-bottom: 10px;" />
+              <p><strong>Rạp:</strong> ${ticketData.theaterName}</p>
+              <p><strong>Suất chiếu:</strong> ${ticketData.showTime} - ${ticketData.showDate}</p>
+              <p><strong>Ghế:</strong> <span style="font-size: 18px; font-weight: bold;">${ticketData.seats}</span></p>
+              <p><strong>Combo:</strong> ${ticketData.combos || "Không có"}</p>
+              <p><strong>Tổng tiền:</strong> ${parseInt(ticketData.totalPrice).toLocaleString()}đ</p>
+            </div>
+            <div style="text-align: center; margin: 20px 0;">
+                <p><strong>Vui lòng xem vé điện tử của bạn trên website của chúng tôi:</strong></p>
+            </div>
+          </div>
+          <div style="background-color: #eee; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+            Cảm ơn bạn đã sử dụng dịch vụ của MovieBooking!
+          </div>
+        </div>
+      `,
+    };
+    // 3. Gửi
+    await transporter.sendMail(mailOptions);
+    console.log(`Email vé đã gửi tới: ${userEmail}`);
+    return true;
+  } catch (error) {
+    console.error("Lỗi gửi email:", error);
+    return false;
+  }
+};
+
 
 // --- CẤU HÌNH GOOGLE CLIENT ---
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -699,36 +745,30 @@ app.get("/api/auth/me", async (req, res) => {
 
     const token = authHeader.split(" ")[1];
     try {
-        // 1. Verify Token chung
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
         let user = null;
         
-        // 2. Kiểm tra type để query đúng bảng
         if (decoded.type === 'user') {
-             // Query bảng users
-             const [users] = await pool.query("SELECT id, name, email, avatar, phone, birth_date, gender FROM users WHERE id=?", [decoded.id]);
+             // THÊM 'points' VÀO CÂU SELECT
+             const [users] = await pool.query("SELECT id, name, email, avatar, phone, birth_date, gender, points FROM users WHERE id=?", [decoded.id]);
              if (users.length) user = users[0];
         } else {
-             // Query bảng admins (cho admin & staff)
              const [admins] = await pool.query("SELECT id, name, email FROM admins WHERE id=?", [decoded.id]);
              if (admins.length) user = admins[0];
         }
 
         if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
 
-        // 3. Trả về format chuẩn để Frontend lưu vào Redux/Context
         res.json({
             user: { 
                 ...user, 
-                type: decoded.type, // Quan trọng: Frontend cần cái này để phân quyền
-                roles: decoded.roles || [] // Quan trọng: Nếu là admin cần roles
+                type: decoded.type,
+                roles: decoded.roles || []
             } 
         });
 
     } catch (err) {
-        console.error("Lỗi Auth Me:", err.message);
-        return res.status(403).json({ message: "Token không hợp lệ hoặc hết hạn" });
+        return res.status(403).json({ message: "Token không hợp lệ" });
     }
 });
 
@@ -1854,106 +1894,70 @@ app.get("/api/reviews/highlights", async (req, res) => {
 
 //============================= API THANH TOÁN !!!! 
 
-// 1. TẠO ĐƠN HÀNG MỚI (Trạng thái PENDING)
-// API này được gọi khi user bấm "Xác nhận & Thanh toán"
+// API Đặt vé & Thanh toán (Booking + Payment)
 app.post("/api/bookings", authenticateUserJWT, async (req, res) => {
-    // Frontend chỉ cần gửi ID, không cần gửi giá tiền (vì server sẽ tự tính)
-    const { showtime_id, seats, combos, promotion_id } = req.body; 
-    // seats: [{id: 10}, {id: 11}] (Chỉ cần ID ghế)
-    // combos: [{id: 1, quantity: 2}]
+    // Frontend gửi thêm tham số: use_points (true/false)
+    const { showtime_id, seats, combos, promotion_id, use_points } = req.body; 
     
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
 
-        // --- BƯỚC 1: TÍNH TIỀN VÉ (Query DB để lấy giá gốc) ---
+        // --- BƯỚC 1: TÍNH TIỀN VÉ ---
         let totalSeatPrice = 0;
-        const seatDetailsToSave = []; // Mảng lưu thông tin để insert vào booking_details
+        const seatDetailsToSave = [];
 
         if (seats && seats.length > 0) {
             const seatIds = seats.map(s => s.id);
-            
-            // Query lấy thông tin ghế + giá vé quy định trong showtime (ticket_prices)
-            // Nếu không có giá riêng trong ticket_prices, dùng base_price của showtime và nhân hệ số
             const sqlGetPrices = `
-                SELECT 
-                    s.id as seat_id, 
-                    s.seat_type_id,
-                    st_type.name as type_name,
-                    st.base_price,
-                    tp.price as custom_price
+                SELECT s.id as seat_id, s.seat_type_id, st_type.name as type_name, st.base_price, tp.price as custom_price
                 FROM seats s
                 JOIN showtimes st ON st.id = ?
                 JOIN seat_types st_type ON s.seat_type_id = st_type.id
                 LEFT JOIN ticket_prices tp ON tp.showtime_id = st.id AND tp.seat_type_id = s.seat_type_id
                 WHERE s.id IN (?)
             `;
-
             const [dbSeats] = await connection.query(sqlGetPrices, [showtime_id, seatIds]);
 
-            // Kiểm tra nếu số ghế tìm được không khớp (có thể ghế ảo hoặc sai ID)
-            if (dbSeats.length !== seatIds.length) {
-                throw new Error("Dữ liệu ghế không hợp lệ hoặc không thuộc suất chiếu này.");
-            }
+            if (dbSeats.length !== seatIds.length) throw new Error("Ghế không hợp lệ.");
 
-            // Duyệt qua từng ghế để tính giá chuẩn
             for (const seat of dbSeats) {
                 let finalPrice = 0;
-
                 if (seat.custom_price) {
-                    // Trường hợp 1: Có giá riêng trong bảng ticket_prices (Ưu tiên cao nhất)
                     finalPrice = Number(seat.custom_price);
                 } else {
-                    // Trường hợp 2: Dùng giá cơ bản * hệ số (Fallback nếu chưa set giá vé)
-                    // Logic hệ số này nên giống hệt Frontend hoặc lưu trong bảng seat_types
                     let multiplier = 1;
                     const typeName = seat.type_name.toLowerCase(); 
-                    
-                    if (typeName.includes('vip')) multiplier = 1.2; // VIP tăng 20%
-                    else if (typeName.includes('couple') || typeName.includes('đôi')) multiplier = 2.0; // Ghế đôi nhân 2
-                    
+                    if (typeName.includes('vip')) multiplier = 1.2;
+                    else if (typeName.includes('couple') || typeName.includes('đôi')) multiplier = 2.0;
                     finalPrice = Math.round(Number(seat.base_price) * multiplier);
                 }
-
                 totalSeatPrice += finalPrice;
-                seatDetailsToSave.push({ 
-                    seat_id: seat.seat_id, 
-                    price: finalPrice // Giá này sẽ lưu vào DB làm bằng chứng
-                });
+                seatDetailsToSave.push({ seat_id: seat.seat_id, price: finalPrice });
             }
         }
 
-        // --- BƯỚC 2: TÍNH TIỀN COMBO (Query DB) ---
+        // --- BƯỚC 2: TÍNH TIỀN COMBO ---
         let totalComboPrice = 0;
         if (combos && combos.length > 0) {
             const comboIds = combos.map(c => c.id);
-            // Lấy giá combo hiện tại từ DB
             const [dbCombos] = await connection.query("SELECT id, price FROM combos WHERE id IN (?)", [comboIds]);
-
             for (const item of combos) {
                 const dbCombo = dbCombos.find(c => c.id === item.id);
-                if (dbCombo) {
-                    totalComboPrice += Number(dbCombo.price) * item.quantity;
-                }
+                if (dbCombo) totalComboPrice += Number(dbCombo.price) * item.quantity;
             }
         }
 
-        // --- BƯỚC 3: TỔNG HỢP & GIẢM GIÁ ---
+        // --- BƯỚC 3: TÍNH TỔNG & KHUYẾN MÃI (PROMOTION) ---
         let calculatedTotal = totalSeatPrice + totalComboPrice;
-        let discountAmount = 0;
+        let discountAmount = 0; // Giảm giá từ Coupon
 
         if (promotion_id) {
-            const [promoRows] = await connection.query(
-                "SELECT * FROM promotions WHERE id = ? AND is_active = 1", 
-                [promotion_id]
-            );
-            
+            const [promoRows] = await connection.query("SELECT * FROM promotions WHERE id = ? AND is_active = 1", [promotion_id]);
             if (promoRows.length > 0) {
                 const promo = promoRows[0];
                 const now = new Date();
-                // Kiểm tra hạn sử dụng chặt chẽ
-                const isValidTime = (!promo.start_date || new Date(promo.start_date) <= now) && 
-                                    (!promo.end_date || new Date(promo.end_date) >= now);
+                const isValidTime = (!promo.start_date || new Date(promo.start_date) <= now) && (!promo.end_date || new Date(promo.end_date) >= now);
                 
                 if (isValidTime) {
                     discountAmount = (calculatedTotal * Number(promo.discount_percent)) / 100;
@@ -1961,12 +1965,47 @@ app.post("/api/bookings", authenticateUserJWT, async (req, res) => {
             }
         }
 
-        const finalTotal = calculatedTotal - discountAmount;
+        let tempTotal = calculatedTotal - discountAmount; // Giá sau khi trừ Coupon
+
+        // --- BƯỚC 4: XỬ LÝ DÙNG ĐIỂM (POINTS) --- 
+        let pointsDiscount = 0; // Tiền giảm từ điểm
+        let pointsUsed = 0;     // Số điểm bị trừ
+
+        if (use_points === true) {
+            // Lấy số điểm hiện tại của User
+            const [userRows] = await connection.query("SELECT points FROM users WHERE id = ?", [req.user.id]);
+            const currentPoints = userRows[0]?.points || 0;
+
+            if (currentPoints > 0) {
+                // Quy đổi: 1 điểm = 1000 VNĐ
+                const maxDiscountByPoints = currentPoints * 1000;
+
+                // Nếu điểm nhiều hơn tiền vé -> Trừ bằng tiền vé (Khách không phải trả tiền)
+                if (maxDiscountByPoints >= tempTotal) {
+                    pointsDiscount = tempTotal;
+                    pointsUsed = Math.ceil(tempTotal / 1000);
+                } else {
+                    // Nếu điểm ít hơn -> Trừ hết điểm
+                    pointsDiscount = maxDiscountByPoints;
+                    pointsUsed = currentPoints;
+                }
+            }
+        }
+
+        // Giá cuối cùng khách phải trả qua SePay
+        const finalTotal = tempTotal - pointsDiscount;
         const combosString = combos && combos.length > 0 ? JSON.stringify(combos) : null;
 
-        // --- BƯỚC 4: INSERT VÀO DB ---
+        // --- BƯỚC 5: INSERT VÀO DB & TRỪ ĐIỂM ---
         
-        // Tạo Booking
+        // 1. Trừ điểm user (Nếu có dùng)
+        if (pointsUsed > 0) {
+            await connection.query("UPDATE users SET points = points - ? WHERE id = ?", [pointsUsed, req.user.id]);
+        }
+
+        // 2. Tạo Booking
+        // Lưu ý: Chúng ta lưu tổng tiền giảm giá (Coupon + Điểm) vào cột discount_amount hoặc tạo cột mới points_discount nếu muốn tách bạch.
+        // Ở đây mình cộng dồn vào discount_amount cho đơn giản.
         const [bookingRes] = await connection.query(
             `INSERT INTO bookings 
             (user_id, showtime_id, total_price, discount_amount, promotion_id, combos_data, status) 
@@ -1974,30 +2013,28 @@ app.post("/api/bookings", authenticateUserJWT, async (req, res) => {
             [
                 req.user.id, 
                 showtime_id, 
-                finalTotal,       // Giá cuối cùng sau khi giảm
-                discountAmount,   
+                finalTotal,       // Giá khách phải trả
+                discountAmount + pointsDiscount, // Tổng giảm giá (Coupon + Điểm)
                 promotion_id || null, 
                 combosString
             ]
         );
         const bookingId = bookingRes.insertId;
 
-        // Tạo Booking Details (Lưu từng ghế với giá đã tính ở Bước 1)
+        // 3. Tạo Booking Details
         if (seatDetailsToSave.length > 0) {
             const values = seatDetailsToSave.map(s => [bookingId, s.seat_id, s.price]);
-            await connection.query(
-                "INSERT INTO booking_details (booking_id, seat_id, price) VALUES ?",
-                [values]
-            );
+            await connection.query("INSERT INTO booking_details (booking_id, seat_id, price) VALUES ?", [values]);
         }
 
         await connection.commit();
         
-        // Trả về bookingId và số tiền cuối cùng để Frontend hiển thị QR
         res.status(201).json({ 
             message: "Đặt vé thành công, vui lòng thanh toán", 
             bookingId: bookingId, 
-            finalTotal: finalTotal 
+            finalTotal: finalTotal, // Frontend dùng số này để tạo QR
+            pointsUsed: pointsUsed,
+            pointsDiscount: pointsDiscount
         });
 
     } catch (err) {
@@ -2111,7 +2148,7 @@ app.get("/api/bookings/:id", async (req, res) => {
     }
 });
 
-// 3. WEBHOOK NHẬN TIỀN TỪ SEPAY (Tự động kích hoạt vé)
+// WEBHOOK NHẬN TIỀN TỪ SEPAY (Tự động kích hoạt vé + TÍCH ĐIỂM + gửi mail)
 app.post("/api/sepay-webhook", async (req, res) => {
     try {
         const { content } = req.body; 
@@ -2124,7 +2161,7 @@ app.post("/api/sepay-webhook", async (req, res) => {
             try {
                 await connection.beginTransaction();
 
-                // 1. Update trạng thái đơn hàng
+                // 1. Update trạng thái đơn hàng thành PAID
                 const [updateRes] = await connection.query(
                     "UPDATE bookings SET status = 'PAID' WHERE id = ? AND status = 'PENDING'", 
                     [bookingId]
@@ -2135,65 +2172,109 @@ app.post("/api/sepay-webhook", async (req, res) => {
                     return res.json({ success: true, message: "Đơn hàng đã xử lý hoặc không tồn tại" });
                 }
 
-                // 2. Lấy thông tin đơn hàng
-                const [bInfo] = await connection.query("SELECT * FROM bookings WHERE id=?", [bookingId]);
+                // 2. Lấy THÔNG TIN CHI TIẾT đơn hàng (để gửi mail và tạo vé)
+                // JOIN thêm các bảng users, movies, theaters, showtimes để lấy tên hiển thị
+                const sqlGetInfo = `
+                    SELECT 
+                        b.*, 
+                        u.name as user_name, u.email as user_email,
+                        m.title as movie_title, 
+                        m.poster_url as movie_poster,
+                        th.name as theater_name,
+                        st.show_date, st.show_time
+                    FROM bookings b
+                    JOIN users u ON b.user_id = u.id
+                    JOIN showtimes st ON b.showtime_id = st.id
+                    JOIN movies m ON st.movie_id = m.id
+                    JOIN theaters th ON st.theater_id = th.id
+                    WHERE b.id = ?
+                `;
+                const [bInfo] = await connection.query(sqlGetInfo, [bookingId]);
                 const booking = bInfo[0];
                 
-                const [details] = await connection.query("SELECT * FROM booking_details WHERE booking_id = ?", [bookingId]);
+                // --- TÍCH ĐIỂM ---
+                const pointsEarned = Math.floor(booking.total_price / 10000);
+                if (pointsEarned > 0) {
+                    await connection.query(
+                        "UPDATE users SET points = IFNULL(points, 0) + ? WHERE id = ?",
+                        [pointsEarned, booking.user_id]
+                    );
+                }
+
+                // 3. Xử lý tạo vé và combo
+                // Lấy chi tiết ghế kèm Số ghế (A1, B2...)
+                const [details] = await connection.query(`
+                    SELECT bd.*, s.seat_number 
+                    FROM booking_details bd
+                    JOIN seats s ON bd.seat_id = s.id 
+                    WHERE bd.booking_id = ?
+                `, [bookingId]);
+
+                let seatNumbers = []; // Lưu danh sách số ghế để gửi mail
 
                 if (details.length > 0 && booking) {
-                    let firstTicketId = null; // Biến để lưu ID vé đầu tiên làm đại diện
+                    let firstTicketId = null;
 
-                    // --- VÒNG LẶP TẠO VÉ VÀ COMBO ---
                     for (let i = 0; i < details.length; i++) {
                         const item = details[i];
-                        
-                        // a. Tạo Vé
+                        seatNumbers.push(item.seat_number); 
+
+                        // Tạo Ticket
                         const [tRes] = await connection.query(
                             "INSERT INTO tickets (user_id, showtime_id, seat_id, price, booking_date, status) VALUES (?, ?, ?, ?, NOW(), 'PAID')",
                             [booking.user_id, booking.showtime_id, item.seat_id, item.price]
                         );
-                        const newTicketId = tRes.insertId;
+                        
+                        if (i === 0) firstTicketId = tRes.insertId;
 
-                        // Lưu lại ID của vé đầu tiên để dùng cho bảng payments
-                        if (i === 0) firstTicketId = newTicketId;
-
-                        // b. Tạo Combo (Gán vào vé đầu tiên)
+                        // Thêm Combo cho vé (chỉ thêm 1 lần cho vé đầu tiên)
                         if (booking.combos_data && i === 0) {
-                             const combosList = JSON.parse(booking.combos_data); 
-                             if (combosList.length > 0) {
-                                 const comboValues = combosList.map(c => [newTicketId, c.id, c.quantity]);
-                                 await connection.query(
-                                     "INSERT INTO ticket_combos (ticket_id, combo_id, quantity) VALUES ?",
-                                     [comboValues]
-                                 );
-                             }
+                            let combosList = [];
+                            try { combosList = JSON.parse(booking.combos_data); } catch (e) {}
+                            if (combosList && combosList.length > 0) {
+                                const comboValues = combosList.map(c => [tRes.insertId, c.id, c.quantity]);
+                                await connection.query(
+                                    "INSERT INTO ticket_combos (ticket_id, combo_id, quantity) VALUES ?",
+                                    [comboValues]
+                                );
+                            }
                         }
                     }
 
-                    // ===========================================================
-                    // 3. LƯU PAYMENT 
-                    // ===========================================================
-                    // Lưu 1 dòng duy nhất với TỔNG TIỀN (booking.total_price)
+                    // Lưu Payment History
                     if (firstTicketId) {
                         await connection.query(
-                            `INSERT INTO payments 
-                            (user_id, ticket_id, amount, payment_method, status, created_at) 
-                            VALUES (?, ?, ?, ?, ?, NOW())`,
-                            [
-                                booking.user_id, 
-                                firstTicketId,        // Gán vào vé đầu tiên để tracking
-                                booking.total_price,  // <--- LẤY TỔNG TIỀN (VÉ + COMBO)
-                                'SePay/QR',   
-                                'Success'
-                            ]
+                            `INSERT INTO payments (user_id, ticket_id, amount, payment_method, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())`,
+                            [booking.user_id, firstTicketId, booking.total_price, 'SePay/QR', 'Success']
                         );
                     }
-                    // ===========================================================
                 }
 
                 await connection.commit();
-                console.log(`Đơn #${bookingId}: Thanh toán ${booking.total_price}đ thành công.`);
+                console.log(`Đơn #${bookingId}: Thanh toán thành công.`);
+
+                // 4. GỬI EMAIL VÉ
+                // Format chuỗi Combo
+                let comboString = "Không có";
+                if (booking.combos_data) {
+                    try {
+                        const cList = JSON.parse(booking.combos_data);
+                        if (cList.length > 0) comboString = cList.map(c => `${c.name} (x${c.quantity})`).join(", ");
+                    } catch (e) {}
+                }
+                // Gọi hàm gửi mail
+                sendTicketEmail(booking.user_email, {
+                    bookingId: booking.id,
+                    userName: booking.user_name,
+                    movieName: booking.movie_title,
+                    movieImage: booking.movie_poster,
+                    theaterName: booking.theater_name,
+                    showTime: booking.show_time,
+                    showDate: new Date(booking.show_date).toLocaleDateString('vi-VN'),
+                    seats: seatNumbers.join(", "),
+                    combos: comboString,
+                    totalPrice: booking.total_price
+                });
 
             } catch (err) {
                 await connection.rollback();
@@ -2356,21 +2437,6 @@ app.get("/api/chat/:userId", async (req, res) => {
         res.status(500).json({ message: "Lỗi server" }); 
     }
 });
-// API Admin lấy danh sách chat users
-app.get("/api/admin/chat/users", authenticateJWT("admin","staff"), async (req, res) => {
-    try {
-        const sql = `
-            SELECT DISTINCT u.id, u.name, u.email, u.avatar,
-            (SELECT message FROM chat_history WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as last_message,
-            (SELECT created_at FROM chat_history WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as last_time
-            FROM users u
-            JOIN chat_history ch ON u.id = ch.user_id
-            ORDER BY last_time DESC
-        `;
-        const [users] = await pool.query(sql);
-        res.json(users);
-    } catch (err) { res.status(500).json({ message: "Lỗi server" }); }
-});
 // API: Đánh dấu tất cả tin nhắn của User này là Đã Đọc
 app.put("/api/chat/read/:userId", async (req, res) => {
     try {
@@ -2386,6 +2452,53 @@ app.put("/api/chat/read/:userId", async (req, res) => {
         res.status(500).json({ message: "Lỗi server" });
     }
 });
+// API Admin lấy danh sách chat users
+app.get("/api/admin/chat/users", authenticateJWT("admin", "staff"), async (req, res) => {
+    try {
+        const sql = `
+            SELECT 
+                u.id, u.name, u.email, u.avatar,
+                
+                -- 1. Lấy nội dung tin nhắn cuối cùng (Bất kể ai gửi)
+                (SELECT message FROM chat_history WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as last_message,
+                
+                -- 2. Lấy NGƯỜI GỬI của tin nhắn cuối cùng (QUAN TRỌNG)
+                (SELECT sender FROM chat_history WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as last_sender,
+                
+                -- 3. Lấy thời gian để sắp xếp
+                (SELECT created_at FROM chat_history WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as last_time,
+                
+                -- 4. Đếm số tin chưa đọc từ khách
+                (SELECT COUNT(*) FROM chat_history WHERE user_id = u.id AND sender = 'user' AND is_read = 0) as unread_count
+                
+            FROM users u
+            JOIN chat_history ch ON u.id = ch.user_id
+            GROUP BY u.id
+            ORDER BY last_time DESC
+        `;
+        const [users] = await pool.query(sql);
+        res.json(users);
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ message: "Lỗi server" }); 
+    }
+});
+// API ADMIN: Đánh dấu tin nhắn của USER NÀY là Đã Đọc (Admin đọc tin user gửi)
+app.put("/api/admin/chat/read/:userId", authenticateJWT("admin", "staff"), async (req, res) => {
+    try {
+        const { userId } = req.params;
+        // Update tin nhắn do user gửi (sender = 'user') và chưa đọc
+        await pool.query(
+            "UPDATE chat_history SET is_read = 1 WHERE user_id = ? AND sender = 'user' AND is_read = 0",
+            [userId]
+        );
+        res.json({ message: "Đã đánh dấu đã đọc" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
+});
+
 
 
 // =============================================================

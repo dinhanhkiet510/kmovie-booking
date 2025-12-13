@@ -106,7 +106,7 @@ function UpcomingComponent() {
             >
               <div 
                 className="card h-100 shadow-sm border-0 hover-scale"
-                style={{ cursor: "pointer", position: 'relative' }} // Thêm relative để định vị nút play
+                style={{ cursor: "pointer", position: 'relative' }}
               >
                 {/* --- Nút Play đè lên ảnh --- */}
                 <div className="position-relative">

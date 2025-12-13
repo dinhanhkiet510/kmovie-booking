@@ -4,7 +4,7 @@ import { createApi } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { 
   FaUserCircle, FaSave, FaTimes, FaEdit, FaKey, FaInfoCircle, 
-  FaPhone, FaBirthdayCake, FaTransgender, FaGem, FaTicketAlt, FaEye, FaHistory, FaReceipt 
+  FaPhone, FaBirthdayCake, FaTransgender, FaGem, FaTicketAlt, FaEye, FaHistory, FaCrown 
 } from 'react-icons/fa'; 
 import MovieTicket from "../components/MovieTicket"; 
 import "../css/UserProfile.css";
@@ -15,7 +15,7 @@ export default function UserProfile() {
 
   const [profileData, setProfileData] = useState(null);
   const [bookings, setBookings] = useState([]); 
-  const [allCombos, setAllCombos] = useState([]); // 1. Thêm state lưu danh sách combo để tra cứu
+  const [allCombos, setAllCombos] = useState([]); 
   const [activeTab, setActiveTab] = useState("info"); 
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({ name: "", email: "", phone: "", birth_date: "", gender: "Nam", avatar: "" });
@@ -37,21 +37,31 @@ export default function UserProfile() {
     return new Date(dateString).toISOString().split('T')[0];
   };
 
+  // --- 1. LOGIC XẾP HẠNG THÀNH VIÊN ---
+  const getMembershipLevel = (points) => {
+      // Logic: 1 điểm = 10.000đ.
+      // Bạc: 200 điểm (2tr), Vàng: 500 điểm (5tr), Kim Cương: 1000 điểm (10tr)
+      if (!points) return { name: "Thành Viên Mới", color: "#f0f0f0", textColor: "#666", icon: "🌱" };
+      if (points >= 1000) return { name: "Kim Cương", color: "#b9f2ff", textColor: "#007bff", icon: "💎" }; 
+      if (points >= 500) return { name: "Vàng", color: "#fff3cd", textColor: "#856404", icon: "👑" }; 
+      if (points >= 200) return { name: "Bạc", color: "#e2e3e5", textColor: "#383d41", icon: "🥈" }; 
+      return { name: "Đồng", color: "#f8d7da", textColor: "#721c24", icon: "🥉" };
+  };
+
   // Fetch Data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 2. Gọi thêm API lấy danh sách combos
         const [resProfile, resBookings, resCombos] = await Promise.all([
             api.get("/user/profile"),
             api.get("/user/bookings"),
-            api.get("/combos") // API public lấy list combo
+            api.get("/combos") 
         ]);
 
         setProfileData(resProfile.data);
         setBookings(resBookings.data);
-        setAllCombos(resCombos.data); // Lưu list combo
+        setAllCombos(resCombos.data); 
         
         const userProfile = resProfile.data?.user;
         setEditData({ 
@@ -118,16 +128,13 @@ export default function UserProfile() {
       return <span className="badge bg-secondary">Đã hủy</span>;
   };
 
-  // Helper format tiền
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
-  // 3. Helper parse combo string (SỬA LỖI UNDEFINED)
   const parseCombos = (combosJson) => {
       if (!combosJson) return "Không có";
       try {
           const list = JSON.parse(combosJson);
           return list.map(c => {
-              // Nếu trong JSON có tên thì dùng, không thì tìm trong danh sách allCombos theo ID
               const name = c.name || (allCombos.find(item => item.id === c.id)?.name) || "Combo";
               return `${name} x${c.quantity}`;
           }).join(", ");
@@ -141,21 +148,49 @@ export default function UserProfile() {
   const userAvatar = currentUserInfo.avatar || `https://ui-avatars.com/api/?name=${currentUserInfo.name}&background=d63384&color=fff`;
   const defaultPoster = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=100&q=60";
 
+  // --- Tính hạng thành viên ---
+  const level = getMembershipLevel(currentUserInfo.points || 0);
+
   return (
     <div className="profile-container">
+       {/* --- 2. GIAO DIỆN HEADER MỚI --- */}
        <div className="profile-header">
           <div className="avatar-display">
             <img src={userAvatar} alt="Avatar" onError={(e) => {e.target.src=`https://ui-avatars.com/api/?name=${currentUserInfo.name}`}} />
           </div>
           <div className="user-details-summary">
-             <h3>{currentUserInfo.name}</h3>
-             <p>{currentUserInfo.email}</p>
-             <p className="points">
-                <FaGem style={{ marginRight: '5px' }} />
-                Điểm tích lũy: {currentUserInfo.points ? currentUserInfo.points.toLocaleString() : 0} điểm
-             </p>
+             <div style={{display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '5px'}}>
+                 <h3 style={{margin: 0}}>{currentUserInfo.name}</h3>
+                 
+                 {/* Badge Hạng Thành Viên */}
+                 <span className="badge rounded-pill shadow-sm" 
+                       style={{
+                           backgroundColor: level.color, 
+                           color: level.textColor, 
+                           fontSize: '0.85rem', 
+                           display: 'flex', 
+                           alignItems: 'center', 
+                           gap: '5px',
+                           padding: '5px 10px'
+                       }}>
+                     {level.icon} {level.name}
+                 </span>
+             </div>
+
+             <p style={{margin: '0 0 10px 0', opacity: 0.8}}>{currentUserInfo.email}</p>
+             
+             {/* Hiển thị điểm nổi bật */}
+             <div className="points-display p-2 rounded d-inline-flex align-items-center" 
+                  style={{backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)'}}>
+                <FaGem className="text-warning me-2" />
+                <span style={{marginRight: '5px'}}>Điểm tích lũy:</span>
+                <span className="fw-bold text-warning fs-5">
+                    {currentUserInfo.points ? currentUserInfo.points.toLocaleString() : 0}
+                </span>
+             </div>
           </div>
        </div>
+       {/* ----------------------------- */}
        
        <div className="tabs-profile">
         <button className={activeTab === "info" ? "active" : ""} onClick={() => setActiveTab("info")}>
@@ -254,7 +289,6 @@ export default function UserProfile() {
                                         {formatCurrency(b.total_price)}
                                     </td>
                                     <td>
-                                        {/* Gọi hàm parseCombos đã sửa lỗi */}
                                         <small className="text-muted">{parseCombos(b.combos_data)}</small>
                                     </td>
                                     <td>

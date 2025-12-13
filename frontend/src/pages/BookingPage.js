@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { createApi } from "../utils/api";
 import { AuthContext } from "../Context/AuthContext";
 import ModalThanhToan from "../components/ModalPayment"; 
-import { FaClock, FaMapMarkerAlt, FaFilm, FaTicketAlt, FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaSpinner } from "react-icons/fa";
+import { FaClock, FaMapMarkerAlt, FaFilm, FaTicketAlt, FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaSpinner, FaGem } from "react-icons/fa";
 import "../css/BookingPage.css";
 
 export default function BookingPage() {
@@ -31,10 +31,16 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // --- STATE KHUYẾN MÃI & ĐIỂM ---
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoMessage, setPromoMessage] = useState("");
   const [promoStatus, setPromoStatus] = useState("");
+  
+  // State mới cho điểm tích lũy
+  const [userPoints, setUserPoints] = useState(0); 
+  const [usePoints, setUsePoints] = useState(false);
+
   const [hasSynced, setHasSynced] = useState(false);
 
   // --- FETCH DATA ---
@@ -73,6 +79,15 @@ export default function BookingPage() {
     }
   };
 
+  // --- LẤY ĐIỂM CỦA USER ---
+  useEffect(() => {
+      if (user) {
+          api.get("/user/profile")
+             .then(res => setUserPoints(res.data.user?.points || 0))
+             .catch(err => console.error("Lỗi lấy điểm:", err));
+      }
+  }, [user, api]);
+
   useEffect(() => {
       if (!showtimeId) return;
       setLoading(true);
@@ -90,39 +105,30 @@ export default function BookingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // --- LOGIC XỬ LÝ GHẾ ---
+  // --- LOGIC XỬ LÝ GHẾ (Giữ nguyên) ---
   const seats = useMemo(() => {
     if (!showtime) return [];
     
-    // 1. Lọc trùng ghế
     const uniqueSeatsMap = new Map();
     if (showtime.seats) {
         showtime.seats.forEach(s => { if (!uniqueSeatsMap.has(s.id)) uniqueSeatsMap.set(s.id, s); });
     }
     const totalSeats = Array.from(uniqueSeatsMap.values());
 
-    // 2. Xác định tổng số hàng (dựa vào chữ cái A, B, C...)
     const rowsSet = new Set();
     totalSeats.forEach(s => rowsSet.add(s.seat_number.charAt(0)));
     const totalRows = rowsSet.size;
-    const sortedRows = Array.from(rowsSet).sort(); // ['A', 'B', 'C'...]
+    const sortedRows = Array.from(rowsSet).sort(); 
 
     return totalSeats.map((seatData) => {
-      // Tìm chỉ số hàng (A=0, B=1...) để áp dụng logic fix cứng
       const rowChar = seatData.seat_number.charAt(0);
       const rowIndex = sortedRows.indexOf(rowChar);
       
-      // Lấy số ghế (1, 2, 3...)
-      const seatNum = parseInt(seatData.seat_number.replace(/^\D+/g, ''));
-
       let typeClass = "normal";
       
-      // Logic Fix cứng: Hàng cuối là Couple
       if (rowIndex === totalRows - 1) {
         typeClass = "couple";
       } else {
-        // Logic VIP: Các hàng giữa (trừ 2 hàng đầu và hàng cuối)
-        // Và trừ các ghế sát lề (giả sử mỗi hàng > 4 ghế)
         if (rowIndex >= 2 && rowIndex < totalRows - 1) {
              typeClass = "vip"; 
         }
@@ -132,7 +138,6 @@ export default function BookingPage() {
       const basePrice = showtime.base_price || 50000;
       const price = Math.round(basePrice * multiplier);
 
-      // Trạng thái
       const isSold = !!seatData.isBooked || seatData.status === 1 || seatData.is_sold === 1;
       let isHeldByMe = false;
       let isHeldByOther = false;
@@ -156,7 +161,6 @@ export default function BookingPage() {
     });
   }, [showtime, user]);
 
-  // --- GOM NHÓM THEO HÀNG  ---
   const seatRows = useMemo(() => {
     const rows = {};
     seats.forEach(seat => {
@@ -164,11 +168,9 @@ export default function BookingPage() {
         if (!rows[rowLabel]) rows[rowLabel] = [];
         rows[rowLabel].push(seat);
     });
-    // Sắp xếp A->Z
     return Object.keys(rows).sort().map(rowLabel => {
         return {
             label: rowLabel,
-            // Sắp xếp 1->10
             seats: rows[rowLabel].sort((a, b) => {
                 const numA = parseInt(a.seat_number.replace(/^\D+/g, '')) || 0;
                 const numB = parseInt(b.seat_number.replace(/^\D+/g, '')) || 0;
@@ -178,7 +180,6 @@ export default function BookingPage() {
     });
   }, [seats]);
 
-  // --- TOGGLE SEAT ---
   const toggleSeat = async (seat) => {
     if (seat.isBooked) return;
 
@@ -186,7 +187,6 @@ export default function BookingPage() {
     if (seat.typeClass !== "couple") {
       idsToToggle = [seat.id];
     } else {
-      // Logic chọn ghế đôi
       const seatNum = parseInt(seat.seat_number.replace(/^\D+/g, ''));
       if (Number.isNaN(seatNum)) return;
       
@@ -204,7 +204,6 @@ export default function BookingPage() {
     const isDeselecting = idsToToggle.every(id => selectedSeats.includes(id));
 
     if (isDeselecting) {
-        // BỎ CHỌN -> GỌI API RELEASE
         setSelectedSeats(prev => prev.filter(id => !idsToToggle.includes(id)));
 
         const seatsToRelease = idsToToggle.filter(id => {
@@ -218,13 +217,12 @@ export default function BookingPage() {
                     showtime_id: showtimeId,
                     seats: seatsToRelease
                 });
-                fetchShowtime(); // Cập nhật lại ngay
+                fetchShowtime(); 
             } catch (err) {
                 console.error("Lỗi hủy giữ ghế:", err);
             }
         }
     } else {
-        // CHỌN MỚI
         setSelectedSeats(prev => Array.from(new Set([...prev, ...idsToToggle])));
     }
   };
@@ -246,6 +244,7 @@ export default function BookingPage() {
     });
   };
 
+  // --- TÍNH TOÁN GIÁ TIỀN ---
   const selectedSeatDetails = selectedSeats.map(id => seats.find(s => s.id === id)).filter(Boolean);
   const comboDetails = Object.entries(selectedCombos).map(([comboId, qty]) => {
     const combo = combos.find(c => c.id === parseInt(comboId));
@@ -254,8 +253,29 @@ export default function BookingPage() {
   }).filter(Boolean);
 
   const tempPrice = selectedSeatDetails.reduce((sum, s) => sum + (s.price || 0), 0) + comboDetails.reduce((sum, c) => sum + c.total, 0);
-  const discountAmount = appliedPromo ? (tempPrice * appliedPromo.discount_percent) / 100 : 0;
-  const finalPrice = tempPrice - discountAmount;
+  
+  // 1. Trừ Voucher trước
+  const discountVoucher = appliedPromo ? (tempPrice * appliedPromo.discount_percent) / 100 : 0;
+  const priceAfterVoucher = tempPrice - discountVoucher;
+
+  // 2. Trừ Điểm sau (Logic 1 điểm = 1000đ)
+  let pointsDiscount = 0;
+  let pointsToUse = 0;
+
+  if (usePoints && userPoints > 0) {
+      const maxDiscount = userPoints * 1000;
+      // Nếu điểm nhiều hơn tiền phải trả -> Trừ bằng tiền phải trả
+      if (maxDiscount >= priceAfterVoucher) {
+          pointsDiscount = priceAfterVoucher;
+          pointsToUse = Math.ceil(priceAfterVoucher / 1000);
+      } else {
+          // Nếu điểm ít hơn -> Trừ hết điểm
+          pointsDiscount = maxDiscount;
+          pointsToUse = userPoints;
+      }
+  }
+
+  const finalPrice = Math.max(0, priceAfterVoucher - pointsDiscount);
 
   const handleApplyCode = async () => {
     if (!promoCode.trim()) return;
@@ -286,7 +306,6 @@ export default function BookingPage() {
     }
   };
 
-  // --- LOGIC GIỮ GHẾ ---
   const handleHoldSeatsAndPay = async () => {
     if (!user) {
       alert("Vui lòng đăng nhập để tiếp tục!");
@@ -295,14 +314,11 @@ export default function BookingPage() {
     
     setLoading(true);
     try {
-      // 1. Lọc ra những ghế CHƯA được giữ bởi tôi
       const seatsToHold = selectedSeats.filter(seatId => {
           const seatObj = seats.find(s => s.id === seatId);
-          // Chỉ gọi API cho ghế nào chưa có cờ isHeldByMe
           return seatObj && !seatObj.isHeldByMe;
       });
 
-      // 2. Nếu có ghế mới cần giữ thì mới gọi API
       if (seatsToHold.length > 0) {
           const res = await api.post("/booking/hold", {
               showtime_id: showtimeId,
@@ -314,12 +330,9 @@ export default function BookingPage() {
               const secondsLeft = Math.floor((expireTime - Date.now()) / 1000);
               setTimeLeft(secondsLeft > 0 ? secondsLeft : 300);
           }
-          
-          // Cập nhật lại dữ liệu để isHeldByMe = true cho các ghế vừa giữ
           await fetchShowtime(); 
       }
 
-      // 3. Mở Modal (Dù có gọi API hay không)
       setShowModal(true);
 
     } catch (err) {
@@ -442,6 +455,8 @@ export default function BookingPage() {
                   }
               </div>
               <hr />
+              
+              {/* --- MÃ GIẢM GIÁ --- */}
               <div className="mb-3">
                   <label className="form-label fw-bold text-muted small"><FaTicketAlt className="me-1"/> Mã khuyến mãi / Voucher</label>
                   <div className="input-group">
@@ -454,9 +469,50 @@ export default function BookingPage() {
                   </div>
                   {promoMessage && <small className={`d-flex align-items-center mt-1 fw-bold ${promoStatus === 'success' ? 'text-success' : 'text-danger'}`}>{promoStatus === 'success' ? <FaCheckCircle className="me-1"/> : <FaExclamationCircle className="me-1"/>}{promoMessage}</small>}
               </div>
+
+              {/* --- SỬ DỤNG ĐIỂM TÍCH LŨY --- */}
+              {userPoints > 0 && (
+                  <div className="mb-3 p-2 rounded" style={{backgroundColor: '#f8f9fa', border: '1px dashed #d63384'}}>
+                      <div className="form-check">
+                          <input 
+                              className="form-check-input" 
+                              type="checkbox" 
+                              id="usePointsCheck" 
+                              checked={usePoints}
+                              onChange={(e) => setUsePoints(e.target.checked)}
+                          />
+                          <label className="form-check-label d-flex justify-content-between w-100" htmlFor="usePointsCheck" style={{cursor: 'pointer'}}>
+                              <span>
+                                  <FaGem className="text-warning me-1" />
+                                  Dùng điểm ({userPoints} điểm)
+                              </span>
+                              <small className="text-muted">-{Math.min(userPoints * 1000, priceAfterVoucher).toLocaleString()}đ</small>
+                          </label>
+                      </div>
+                      <small className="text-muted d-block mt-1 ps-4" style={{fontSize: '0.8rem'}}>
+                          (1 điểm = 1.000đ. Tối đa 100% giá trị vé)
+                      </small>
+                  </div>
+              )}
+              {/* ------------------------------- */}
+
               <hr />
               <div className="d-flex justify-content-between mb-1 text-muted"><span>Tạm tính:</span><span>{tempPrice.toLocaleString()}đ</span></div>
-              {appliedPromo && <div className="d-flex justify-content-between mb-1 text-success"><span>Giảm giá ({appliedPromo.discount_percent}%):</span><span>-{discountAmount.toLocaleString()}đ</span></div>}
+              
+              {appliedPromo && (
+                  <div className="d-flex justify-content-between mb-1 text-success">
+                      <span>Giảm giá ({appliedPromo.discount_percent}%):</span>
+                      <span>-{discountVoucher.toLocaleString()}đ</span>
+                  </div>
+              )}
+
+              {usePoints && pointsDiscount > 0 && (
+                  <div className="d-flex justify-content-between mb-1 text-warning fw-bold">
+                      <span>Dùng điểm ({pointsToUse}đ):</span>
+                      <span>-{pointsDiscount.toLocaleString()}đ</span>
+                  </div>
+              )}
+
               <div className="d-flex justify-content-between fw-bold fs-5 text-pink mt-2"><span>Tổng cộng:</span><span>{finalPrice.toLocaleString()}đ</span></div>
               
               <button className="btn btn-danger w-100 mt-3 py-2 fw-bold" onClick={handleHoldSeatsAndPay} disabled={selectedSeats.length === 0 || loading}>
@@ -476,6 +532,9 @@ export default function BookingPage() {
           userId={user?.id} 
           showtimeId={showtimeId}
           promotionId={appliedPromo?.id}
+          // --- TRUYỀN THÊM PROPS CHO MODAL ---
+          usePoints={usePoints} 
+          pointsDiscount={pointsDiscount}
           api={api} 
         />
       )}

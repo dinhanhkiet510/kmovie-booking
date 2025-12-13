@@ -12,35 +12,38 @@ export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  // --- THÊM STATE ĐẾM TIN NHẮN CHƯA ĐỌC ---
   const [unreadCount, setUnreadCount] = useState(0); 
   
   const messagesEndRef = useRef(null);
-  
-  // Dùng useRef để lưu trạng thái isOpen mới nhất bên trong socket callback
-  const isOpenRef = useRef(isOpen); 
+  const isOpenRef = useRef(isOpen); // Ref để theo dõi trạng thái mở/đóng trong socket
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Cập nhật ref mỗi khi isOpen thay đổi
   useEffect(() => {
     isOpenRef.current = isOpen;
   }, [isOpen]);
+
+  // Hàm gọi API đánh dấu đã đọc
+  const markAsRead = async () => {
+      try {
+          await axios.put(`http://localhost:5000/api/chat/read/${user.id}`);
+      } catch (error) {
+          console.error("Lỗi đánh dấu đã đọc:", error);
+      }
+  };
 
   useEffect(() => {
     if (user) {
       socket.emit("join_room", user.id);
 
-      // 1. Lấy lịch sử chat và tính số tin chưa đọc ban đầu
+      // 1. Load tin nhắn cũ
       axios.get(`http://localhost:5000/api/chat/${user.id}`).then(res => {
           setMessages(res.data);
-          
-          // Đếm số tin nhắn từ Admin mà chưa đọc (is_read === 0)
+          // Đếm số tin chưa đọc từ Database
           const unread = res.data.filter(msg => msg.sender !== 'user' && msg.is_read === 0).length;
           setUnreadCount(unread);
-          
           scrollToBottom();
       });
 
@@ -50,10 +53,14 @@ export default function ChatWidget() {
         scrollToBottom();
 
         // LOGIC QUAN TRỌNG:
-        // Nếu tin nhắn từ Admin VÀ Chat đang đóng -> Tăng biến đếm
-        if (data.sender !== 'user' && !isOpenRef.current) {
-            setUnreadCount(prev => prev + 1);
-            // Có thể thêm âm thanh thông báo ở đây nếu thích: new Audio('/sound.mp3').play();
+        if (data.sender !== 'user') {
+            if (isOpenRef.current) {
+                // Nếu đang mở chat -> Gọi API đánh dấu đọc ngay lập tức
+                markAsRead(); 
+            } else {
+                // Nếu đang đóng -> Tăng biến đếm thông báo
+                setUnreadCount(prev => prev + 1);
+            }
         }
       });
     }
@@ -63,23 +70,16 @@ export default function ChatWidget() {
     };
   }, [user]);
 
-  // Scroll khi có tin nhắn mới hoặc mở chat
   useEffect(() => {
       if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
 
-  // --- HÀM MỞ CHAT ---
-  const handleOpenChat = async () => {
+  // Khi bấm mở chat
+  const handleOpenChat = () => {
       setIsOpen(true);
-      
-      // Nếu có tin nhắn chưa đọc -> Reset về 0 và gọi API đánh dấu đã đọc
       if (unreadCount > 0) {
-          setUnreadCount(0);
-          try {
-              await axios.put(`http://localhost:5000/api/chat/read/${user.id}`);
-          } catch (error) {
-              console.error("Lỗi đánh dấu đã đọc:", error);
-          }
+          setUnreadCount(0); // Xóa số đỏ trên UI
+          markAsRead(); // Gọi xuống DB update is_read = 1
       }
   };
 
@@ -93,8 +93,10 @@ export default function ChatWidget() {
       created_at: new Date().toISOString()
     };
 
-    // Optimistic UI: Hiển thị ngay lập tức để chat mượt hơn
-    setMessages((prev) => [...prev, msgData]); 
+    // --- FIX LỖI GỬI 2 LẦN: XÓA DÒNG setMessages Ở ĐÂY ---
+    // setMessages((prev) => [...prev, msgData]); (Bỏ dòng này)
+    // Lý do: Socket server sẽ gửi lại tin nhắn này về cho client, 
+    // lúc đó socket.on("receive_message") sẽ tự thêm vào.
 
     await socket.emit("send_message", msgData);
     setNewMessage("");
@@ -107,8 +109,6 @@ export default function ChatWidget() {
       {!isOpen && (
         <button className="chat-btn" onClick={handleOpenChat}>
           <FaCommentDots size={28} />
-          
-          {/* --- HIỂN THỊ CHẤM ĐỎ NẾU CÓ TIN NHẮN MỚI --- */}
           {unreadCount > 0 && (
               <span className="unread-badge">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -132,19 +132,11 @@ export default function ChatWidget() {
             
             {messages.map((msg, index) => (
               <div key={index} className={`message-row ${msg.sender === "user" ? "message-right" : "message-left"}`}>
-                  
                  {msg.sender !== 'user' && (
-                     <div 
-                        className="avatar-admin"
-                        style={{
-                            backgroundColor: msg.admin_role === 'admin' ? '#dc3545' : '#0d6efd'
-                        }}
-                        title={msg.admin_name || "Nhân viên hỗ trợ"}
-                     >
+                     <div className="avatar-admin" style={{backgroundColor: msg.admin_role === 'admin' ? '#dc3545' : '#0d6efd'}} title={msg.admin_name}>
                         {msg.admin_role === 'admin' ? 'AD' : 'NV'}
                      </div>
                  )}
-
                  <div className={`message-bubble ${msg.sender === "user" ? "bubble-user" : "bubble-admin"}`}>
                     {msg.sender !== 'user' && (
                         <div style={{fontSize: '10px', fontWeight: 'bold', color: '#666', marginBottom: '2px'}}>
