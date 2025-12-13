@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 // Dùng bộ icon có sẵn của bạn
-import { FaFilter, FaChevronLeft, FaChevronRight, FaStar, FaCalendarAlt, FaGlobe, FaFilm } from "react-icons/fa"; 
+import { FaFilter, FaChevronLeft, FaChevronRight, FaStar, FaCalendarAlt, FaGlobe, FaFilm, FaClock } from "react-icons/fa"; 
 import "../css/Movies.css";
 import Banner from "../components/Banner";
 import NowShowingComponent from "../components/NowShowingComponent";
@@ -221,10 +221,39 @@ function Movies() {
                   </div>
                   
                   <div className="movie-info">
-                    <h5 className="movie-title" title={movie.title}>{movie.title}</h5>
-                    <div className="movie-meta">
-                        <span className="genre">{movie.genres}</span>
-                        {/* <span className="duration">120p</span> */}
+                    {/* Tiêu đề phim: Giới hạn 2 dòng, hover đổi màu */}
+                    <h5 className="movie-title" title={movie.title}>
+                      {movie.title}
+                    </h5>
+
+                    {/* Thông tin phụ: Quốc gia & Thời lượng */}
+                    <div className="movie-sub-info">
+                      <span className="info-item">
+                        <FaGlobe className="info-icon" /> 
+                        {movie.country || "N/A"}
+                      </span>
+                      <span className="info-item">
+                        <FaClock className="info-icon" /> {/* Nhớ import FaClock từ react-icons/fa */}
+                        {movie.duration ? `${movie.duration}'` : "N/A"}
+                      </span>
+                    </div>
+
+                    {/* Thể loại: Hiển thị dạng Badge */}
+                    <div className="movie-genres-list">
+                      {movie.genres ? (
+                        // Chỉ lấy 2 thể loại đầu tiên để tránh vỡ layout nếu quá dài
+                        movie.genres.split(', ').slice(0, 2).map((g, index) => (
+                          <span key={index} className="genre-pill">
+                            {g}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="genre-pill">Đang cập nhật</span>
+                      )}
+                      {/* Nếu có nhiều hơn 2 thể loại thì hiện dấu + */}
+                      {movie.genres && movie.genres.split(', ').length > 2 && (
+                        <span className="genre-pill-more">+{movie.genres.split(', ').length - 2}</span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -48,29 +48,21 @@
   letter-spacing: 1px;
 }
 
-.title-underline {
-  width: 60px;
-  height: 4px;
-  background: var(--primary-pink);
-  margin: 0 auto 10px auto;
-  border-radius: 2px;
-}
-
 .section-subtitle {
   color: var(--text-gray);
   font-size: 1.1rem;
 }
 
-/* --- Filter Bar (FIXED) --- */
+/* --- Filter Bar --- */
 .filter-bar {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 50px; /* Bo tròn kiểu viên thuốc */
+  border-radius: 50px;
   padding: 15px 30px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 5px 20px rgba(255, 182, 193, 0.3); /* Bóng hồng nhẹ */
+  box-shadow: 0 5px 20px rgba(255, 182, 193, 0.3);
   margin: 0 auto;
   max-width: 900px;
 }
@@ -105,7 +97,7 @@
   justify-content: flex-end;
 }
 
-/* --- Custom Select Styles (Quan trọng để fix lỗi không click được) --- */
+/* --- Custom Select Styles --- */
 .custom-select-wrapper {
   position: relative;
   min-width: 180px;
@@ -118,15 +110,15 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--primary-pink);
-  z-index: 2; /* Đảm bảo icon nằm trên */
-  pointer-events: none; /* QUAN TRỌNG: Cho phép click xuyên qua icon vào thẻ select */
+  z-index: 2;
+  pointer-events: none;
 }
 
 .custom-select {
   width: 100%;
-  padding: 12px 20px 12px 45px; /* Padding trái né icon */
-  appearance: none; /* Ẩn mũi tên mặc định */
-  background-color: #fff0f3; /* Nền hồng siêu nhạt */
+  padding: 12px 20px 12px 45px;
+  appearance: none;
+  background-color: #fff0f3;
   border: 1px solid transparent;
   border-radius: 25px;
   color: var(--text-dark);
@@ -148,7 +140,6 @@
   background-color: white;
 }
 
-/* Mũi tên custom bên phải */
 .select-arrow {
   position: absolute;
   top: 50%;
@@ -200,7 +191,7 @@
   font-weight: 600;
 }
 
-/* --- Movie Card (Light Theme) --- */
+/* --- Movie Card --- */
 .movie-card {
   background-color: var(--card-bg);
   border-radius: var(--radius);
@@ -208,7 +199,7 @@
   transition: var(--transition);
   cursor: pointer;
   position: relative;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* Bóng mờ nhẹ */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
   border: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
@@ -238,7 +229,6 @@
   transform: scale(1.08);
 }
 
-/* Overlay hồng khi hover */
 .overlay {
   position: absolute;
   inset: 0;
@@ -286,48 +276,97 @@
   box-shadow: 0 2px 8px rgba(255, 71, 126, 0.4);
 }
 
+/* =========================================
+   MOVIE INFO DESIGN (NEW)
+   ========================================= */
 .movie-info {
   padding: 16px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
   flex-grow: 1;
-  justify-content: space-between;
+  background-color: #fff;
 }
 
+/* Tiêu đề phim */
 .movie-title {
-  margin: 0 0 5px 0;
+  margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-dark);
+  line-height: 1.4;
+  height: 2.8em; /* Giới hạn chiều cao đúng 2 dòng */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s ease;
 }
 
 .movie-card:hover .movie-title {
   color: var(--primary-pink);
 }
 
-.movie-meta {
+/* Dòng thông tin phụ (Quốc gia, Thời lượng) */
+.movie-sub-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 15px;
   font-size: 0.85rem;
-  color: var(--text-gray);
-  margin-top: 8px;
+  color: #888;
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 10px;
 }
 
-.genre {
-  background: #f8f9fa;
-  color: #666;
-  padding: 4px 10px;
-  border-radius: 6px;
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-icon {
+  color: var(--primary-pink);
   font-size: 0.8rem;
-  border: 1px solid #eee;
+  opacity: 0.8;
 }
 
-/* --- Pagination (Light Pink) --- */
+/* Khu vực Thể loại (Genre) */
+.movie-genres-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: auto; /* Đẩy xuống dưới cùng nếu card dài */
+}
+
+/* Thẻ Genre (Pill Style) */
+.genre-pill {
+  font-size: 0.75rem;
+  color: #666;
+  background-color: #f8f9fa;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #eee;
+  white-space: nowrap;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.movie-card:hover .genre-pill {
+  background-color: var(--light-pink);
+  color: var(--primary-pink);
+  border-color: transparent;
+}
+
+/* Nút + số lượng còn lại */
+.genre-pill-more {
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 600;
+  padding-left: 2px;
+}
+
+/* --- Pagination --- */
 .pagination-wrapper {
   display: flex;
   justify-content: center;
@@ -358,32 +397,37 @@
   box-shadow: 0 5px 15px rgba(255, 71, 126, 0.3);
 }
 
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .page-numbers {
-    display: flex;
-    gap: 8px;
+   display: flex;
+   gap: 8px;
 }
 
 .page-num {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-gray);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   border: 1px solid transparent;
+   background: transparent;
+   color: var(--text-gray);
+   font-weight: 600;
+   cursor: pointer;
+   transition: var(--transition);
 }
 
 .page-num.active {
-    background: var(--primary-pink);
-    color: white;
-    box-shadow: 0 4px 10px rgba(255, 71, 126, 0.3);
+   background: var(--primary-pink);
+   color: white;
+   box-shadow: 0 4px 10px rgba(255, 71, 126, 0.3);
 }
 
 .page-num:hover:not(.active) {
-    background: #fff0f3;
-    color: var(--primary-pink);
+   background: #fff0f3;
+   color: var(--primary-pink);
 }
 
 @keyframes pulse {

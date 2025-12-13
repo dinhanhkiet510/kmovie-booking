@@ -1388,39 +1388,51 @@ app.get("/api/theaters", async (req, res) => {
   }
 });
 
-// Movies Public APIs
+// API lấy danh sách phim
 app.get("/api/movies", async (req, res) => {
     try {
         const [rows] = await pool.query(`
-            SELECT m.*, c.name AS country, GROUP_CONCAT(g.name SEPARATOR ', ') AS genres,
-            CASE WHEN m.release_date > NOW() THEN 1 ELSE 0 END AS is_upcoming
+            SELECT 
+                m.id, 
+                m.title, 
+                m.poster_url, 
+                m.rating, 
+                m.release_date,
+                m.duration,
+                c.name AS country, 
+                GROUP_CONCAT(g.name SEPARATOR ', ') AS genres,
+                CASE WHEN m.release_date > NOW() THEN 1 ELSE 0 END AS is_upcoming
             FROM movies m
             LEFT JOIN countries c ON m.country_id = c.id
             LEFT JOIN movie_genres mg ON mg.movie_id = m.id
             LEFT JOIN genres g ON mg.genre_id = g.id
-            GROUP BY m.id ORDER BY m.release_date DESC
+            GROUP BY m.id 
+            ORDER BY m.release_date DESC
         `);
         res.json(rows);
-    } catch (err) { res.status(500).json({message: "Lỗi tải phim"}); }
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({message: "Lỗi tải phim"}); 
+    }
 });
+
 app.get("/api/movies/now_showing", async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM movies WHERE release_date <= NOW() ORDER BY release_date DESC");
     res.json(rows);
 });
+
 app.get("/api/movies/upcoming", async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM movies WHERE release_date > NOW() ORDER BY release_date ASC");
     res.json(rows);
 });
+
 // API: bộ lọc phim
 app.get("/api/movies/filter", async (req, res) => {
     try {
-        // 1. Lấy tham số từ URL (Frontend gửi lên)
         const { country_id, genre_id, is_upcoming } = req.query;
         
-        // 2. Viết câu SQL cơ bản: Lấy phim + Tên quốc gia + Chuỗi thể loại
-        // Lưu ý: Dùng subquery lấy genres để tránh bị duplicate dòng khi join
         let sql = `
-            SELECT m.*, c.name as country_name, 
+            SELECT m.*, c.name as country, 
             (
                 SELECT GROUP_CONCAT(g.name SEPARATOR ', ')
                 FROM movie_genres mg
@@ -1434,8 +1446,7 @@ app.get("/api/movies/filter", async (req, res) => {
         
         const params = [];
 
-        // 3. Xử lý từng điều kiện lọc
-        
+        // Xử lý từng điều kiện lọc
         // --- Lọc theo Quốc gia ---
         if (country_id) {
             sql += " AND m.country_id = ?";
@@ -1443,7 +1454,6 @@ app.get("/api/movies/filter", async (req, res) => {
         }
 
         // --- Lọc theo Thể loại (Quan trọng) ---
-        // Dùng EXISTS để tìm phim có chứa genre_id này
         if (genre_id) {
             sql += ` AND EXISTS (
                 SELECT 1 FROM movie_genres mg_check 
