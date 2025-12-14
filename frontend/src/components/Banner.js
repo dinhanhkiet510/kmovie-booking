@@ -57,10 +57,6 @@ function Banner({ title = "Mua vé xem phim Online trên",
                 />
                 <div
                     className="position-absolute top-0 start-0 w-100 h-100 rounded"
-                    style={{
-                    background:
-                        "linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0))",
-                    }}
                 ></div>
                 </div>
             </div>

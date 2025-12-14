@@ -105,59 +105,70 @@ export default function BookingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // --- LOGIC XỬ LÝ GHẾ (Giữ nguyên) ---
+  // --- LOGIC XỬ LÝ GHẾ---
   const seats = useMemo(() => {
     if (!showtime) return [];
     
+    // 1. Lọc ghế trùng (Giữ nguyên logic cũ)
     const uniqueSeatsMap = new Map();
     if (showtime.seats) {
-        showtime.seats.forEach(s => { if (!uniqueSeatsMap.has(s.id)) uniqueSeatsMap.set(s.id, s); });
+        showtime.seats.forEach(s => { 
+            if (!uniqueSeatsMap.has(s.id)) uniqueSeatsMap.set(s.id, s); 
+        });
     }
     const totalSeats = Array.from(uniqueSeatsMap.values());
 
-    const rowsSet = new Set();
-    totalSeats.forEach(s => rowsSet.add(s.seat_number.charAt(0)));
-    const totalRows = rowsSet.size;
-    const sortedRows = Array.from(rowsSet).sort(); 
-
+    // 2. Map dữ liệu để hiển thị
     return totalSeats.map((seatData) => {
-      const rowChar = seatData.seat_number.charAt(0);
-      const rowIndex = sortedRows.indexOf(rowChar);
-      
-      let typeClass = "normal";
-      
-      if (rowIndex === totalRows - 1) {
-        typeClass = "couple";
-      } else {
-        if (rowIndex >= 2 && rowIndex < totalRows - 1) {
-             typeClass = "vip"; 
+        let typeClass = "normal";
+        let typeLabel = "Ghế Thường";
+        let multiplier = 1;
+
+        // --- QUAN TRỌNG: Lấy type trực tiếp từ DB ---
+        // ID 1: Thường, ID 2: VIP, ID 3: Đôi
+        switch (seatData.seat_type_id) {
+            case 2:
+                typeClass = "vip";
+                typeLabel = "Ghế VIP";
+                multiplier = 1.5; // Hệ số bạn yêu cầu
+                break;
+            case 3:
+                typeClass = "couple";
+                typeLabel = "Ghế Đôi";
+                multiplier = 2.0; // Hệ số bạn yêu cầu
+                break;
+            default:
+                typeClass = "normal";
+                typeLabel = "Ghế Thường";
+                multiplier = 1.0;
+                break;
         }
-      }
 
-      const multiplier = typeClass === "vip" ? 1.2 : typeClass === "couple" ? 2.0 : 1.0; 
-      const basePrice = showtime.base_price || 50000;
-      const price = Math.round(basePrice * multiplier);
+        // Tính giá hiển thị trên web
+        const basePrice = showtime.base_price || 50000;
+        const price = Math.round(basePrice * multiplier);
 
-      const isSold = !!seatData.isBooked || seatData.status === 1 || seatData.is_sold === 1;
-      let isHeldByMe = false;
-      let isHeldByOther = false;
+        // Logic trạng thái ghế (Giữ nguyên)
+        const isSold = !!seatData.isBooked || seatData.status === 1 || seatData.is_sold === 1;
+        let isHeldByMe = false;
+        let isHeldByOther = false;
 
-      if (seatData.hold_user_id) {
-         if (user && seatData.hold_user_id == user.id) {
-             isHeldByMe = true;
-         } else {
-             isHeldByOther = true;
-         }
-      }
+        if (seatData.hold_user_id) {
+            if (user && seatData.hold_user_id == user.id) {
+                isHeldByMe = true;
+            } else {
+                isHeldByOther = true;
+            }
+        }
 
-      return {
-        ...seatData,
-        isBooked: isSold || isHeldByOther,
-        isHeldByMe,
-        typeLabel: typeClass === "vip" ? "Ghế VIP" : typeClass === "couple" ? "Ghế Đôi" : "Ghế Thường",
-        typeClass,
-        price
-      };
+        return {
+            ...seatData,
+            isBooked: isSold || isHeldByOther,
+            isHeldByMe,
+            typeLabel,
+            typeClass, // Class CSS để tô màu
+            price      // Giá chuẩn đã nhân hệ số
+        };
     });
   }, [showtime, user]);
 
@@ -353,6 +364,7 @@ export default function BookingPage() {
   if (loading && !showtime) return <div className="d-flex flex-column align-items-center justify-content-center vh-100"><FaSpinner className="fa-spin fs-1 text-pink mb-3"/><p>Đang tải dữ liệu...</p></div>;
   if (!showtime) return <div className="text-center p-5">Không tìm thấy suất chiếu</div>;
 
+  console.log(selectedSeatDetails)
   return (
     <div className="container my-4">
       <div className="text-center mb-4 position-relative">
@@ -373,41 +385,51 @@ export default function BookingPage() {
 
       <div className="row">
         <div className="col-md-8 mb-4">
-          <div className="screen text-center mb-3">MÀN HÌNH</div>
-          
-          <div className="seat-map-container d-flex flex-column align-items-center">
-            {seatRows.map((row) => (
-              <div key={row.label} className="d-flex align-items-center mb-2 w-100 justify-content-center">
-                <div className="fw-bold me-3 text-muted text-center" style={{width: '20px'}}>{row.label}</div>
-                
-                <div className="d-flex justify-content-center gap-1 flex-wrap">
-                    {row.seats.map(seat => (
-                    <button
-                        key={seat.id}
-                        className={`btn seat ${seat.typeClass} 
-                           ${selectedSeats.includes(seat.id) ? "selected" : ""} 
-                           ${seat.isBooked ? "booked" : ""} 
-                           ${seat.isHeldByMe ? "selected" : ""}  
-                        `}
-                        onClick={() => toggleSeat(seat)}
-                        disabled={seat.isBooked}
-                        title={`${seat.seat_number} (${seat.typeLabel}) - ${seat.price.toLocaleString()}đ`}
-                    >
-                        {seat.seat_number.replace(/^\D+/g, '')}
-                    </button>
-                    ))}
-                </div>
-              </div>
+         <div className="screen-container">
+    <div className="screen">MÀN HÌNH</div>
+  </div>
+  
+  {/* Sơ đồ ghế */}
+  <div className="seat-map-container">
+    {seatRows.map((row) => (
+      <div key={row.label} className="d-flex align-items-center mb-2 justify-content-center w-100">
+        
+        {/* Tên hàng ghế (A, B, C...) */}
+        <div className="fw-bold me-3 text-muted text-center" style={{width: '25px', fontSize: '1rem'}}>
+            {row.label}
+        </div>
+        
+        {/* Danh sách ghế: Flex nowrap để luôn thẳng hàng ngang */}
+        <div className="d-flex justify-content-center" style={{flexWrap: 'nowrap'}}>
+            {row.seats.map((seat) => (
+                <button
+                    key={seat.id}
+                    className={`btn seat ${seat.typeClass} 
+                        ${selectedSeats.includes(seat.id) ? "selected" : ""} 
+                        ${seat.isBooked ? "booked" : ""} 
+                        ${seat.isHeldByMe ? "selected" : ""}  
+                    `}
+                    onClick={() => toggleSeat(seat)}
+                    disabled={seat.isBooked}
+                    title={`${seat.seat_number} (${seat.typeLabel}) - ${seat.price.toLocaleString()}đ`}
+                >
+                    {/* Hiển thị Icon trái tim cho ghế đôi, số cho ghế thường */}
+                    {seat.typeClass === 'couple' ? '♥' : seat.seat_number.replace(/^\D+/g, '')}
+                </button>
             ))}
-          </div>
-          
-          <div className="mt-4 d-flex justify-content-center gap-4 seat-legend flex-wrap">
-            <div><span className="seat normal"></span> Thường</div>
-            <div><span className="seat vip"></span> VIP</div>
-            <div><span className="seat couple"></span> Đôi</div>
-            <div><span className="seat booked"></span> Đã bán/Giữ</div>
-            <div><span className="seat selected"></span> Đang chọn</div>
-          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  {/* Chú thích */}
+  <div className="mt-5 d-flex justify-content-center gap-4 seat-legend flex-wrap border-top pt-4">
+    <div className="d-flex align-items-center"><span className="seat normal"></span> Thường</div>
+    <div className="d-flex align-items-center"><span className="seat vip"></span> Trung tâm</div>
+    <div className="d-flex align-items-center"><span className="seat couple"></span> Đôi</div>
+    <div className="d-flex align-items-center"><span className="seat booked"></span> Đã đặt</div>
+    <div className="d-flex align-items-center"><span className="seat selected"></span> Đang chọn</div>
+  </div>
 
           {/* Phần Combo */}
           <div className="mt-4">

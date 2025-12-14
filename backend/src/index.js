@@ -1937,9 +1937,17 @@ app.post("/api/bookings", authenticateUserJWT, async (req, res) => {
                     finalPrice = Number(seat.custom_price);
                 } else {
                     let multiplier = 1;
-                    const typeName = seat.type_name.toLowerCase(); 
-                    if (typeName.includes('vip')) multiplier = 1.2;
-                    else if (typeName.includes('couple') || typeName.includes('đôi')) multiplier = 2.0;
+                    
+                    // Lấy tên loại ghế từ DB (bảng seat_types) để xác định hệ số giá
+                    // Check theo ID 
+                    if (seat.seat_type_id === 2) {
+                        multiplier = 1.5; // SỬA: 1.2 -> 1.5
+                    } else if (seat.seat_type_id === 3) {
+                        multiplier = 2.0;
+                    } else {
+                        multiplier = 1.0;
+                    }
+
                     finalPrice = Math.round(Number(seat.base_price) * multiplier);
                 }
                 totalSeatPrice += finalPrice;
